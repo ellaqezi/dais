@@ -78,11 +78,11 @@ If the review finds issues, fix them in the same staged changeset — do not com
 
 After committing, run a quick sanity scan (`git show HEAD`) to catch anything the pre-commit loop missed. If this finds issues, treat it as a process failure (the pre-commit loop should have caught them). Fix-forward in a new commit only when strictly necessary (e.g., pre-commit hook caught a legitimate issue that required the commit to land first).
 
-## Rate-limit handling — always schedule a retry cron, never stall
+## Rate-limit handling — always run a retry cron, never stall
 
-When any operation is throttled — a `429` / `403 secondary rate limit` / "rate limit" / "usage limit" / "try again later" from the GitHub API, CodeRabbit, the model/API itself, or any CLI reporting a cooldown — do NOT abandon the work and do NOT block the session busy-waiting. **Always spin up a cron that retries shortly:**
+This is a global rule (see `CLAUDE.md` Core Principles): on every request, keep a retry cron running so any throttling is caught and retried automatically rather than stalling the work. When an operation is throttled — a `429` / `403 secondary rate limit` / "rate limit" / "usage limit" / "try again later" from the GitHub API, CodeRabbit, the model/API itself, or any CLI reporting a cooldown — do NOT abandon the work and do NOT block the session busy-waiting; let the standing cron catch it and retry.
 
-- **Create a cron on a ~2-minute cadence** (`CronCreate`, e.g. `*/2 * * * *`) whose job is to re-attempt the throttled operation. Rate-limit cooldowns are typically a few minutes, so a 2-minute tick retries soon after the window clears without hammering the limit.
+- **Run a cron on a ~2-minute cadence** (`CronCreate`, e.g. `*/2 * * * *`) whose job is to catch any throttled operation and re-attempt it. Rate-limit cooldowns are typically a few minutes, so a 2-minute tick retries soon after the window clears without hammering the limit.
 - **Each firing checks first, then retries.** If the limit has cleared, run the retry; if still limited, log and wait for the next tick (back the effective retry off toward "a few minutes" by skipping ticks when the provider returns a `Retry-After`).
 - **Self-terminate.** Once the operation succeeds (or hits a terminal non-retryable state), the cron deletes itself (`CronDelete`). A retry cron must never outlive the work it was created for.
 - **Cap and escalate.** Give up after a sensible ceiling (e.g. ~24h for a CR review, much shorter for interactive work) and escalate to the user rather than retrying forever.

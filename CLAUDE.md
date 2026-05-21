@@ -44,6 +44,7 @@ Each project has its own `CLAUDE.md` with project-specific overrides that take p
 
 > **Scale to context**: some rules below (PR reviews, staging environments, on-call — see `infra-ops.md`) assume a multi-person team. Apply proportionally — a solo project doesn't need a formal review process, but the underlying principle (don't merge broken code, test before deploying) always applies.
 
+- **Always run a rate-limit retry cron — for every request, never stall.** From the start of any request, keep a ~2-minute cron running (`CronCreate`, e.g. `*/2 * * * *`) that catches any throttling (`429` / secondary rate limit / usage limit / "try again later" from any tool, model, or API) and retries the pending work a few minutes later, so nothing stalls silently on a rate limit. The cron self-deletes (`CronDelete`) once the work completes and escalates after a sensible ceiling. Fuller version in `git-workflow.md` §"Rate-limit handling".
 - **Simplicity First**: make every change as simple as possible. Minimal impact.
 - **No Laziness**: find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: touch only what's necessary. When uncertain between two approaches, pick the simpler one and move forward rather than asking.
@@ -130,7 +131,6 @@ Full rubric, PR-shipping tier split, and rationale in `~/.claude/subagent-strate
 - Use subagents liberally to keep the main context clean; one focused task per subagent. **Brief them fully** — they start cold: goal, relevant context (what you tried/ruled out), expected output format, length cap.
 - **When NOT to use subagents**: tight debugging loops where each iteration informs the next, work needing multiple rounds of your own judgement, interactive refinement with the user.
 - **Parallel vs background**: multiple independent queries -> one message with parallel `Agent` calls. Long-running watchers (CI, builds) -> `run_in_background: true`, read output when notified. Lock patterns for concurrent agents in `multi-agent-comms.md`.
-- **Rate-limited? Schedule a retry cron, never stall.** On any `429`/secondary-rate-limit/usage-limit/"try again later", spin up a ~2-minute `CronCreate` retry that self-deletes (`CronDelete`) on success and escalates after a ceiling. Full rule in `git-workflow.md` §"Rate-limit handling".
 - **Delegate to the cheapest sufficient tier — actively, not just when in doubt.** The main session is usually the most expensive option; reserving it for work that needs it is the biggest cost lever.
 - **Set the `model` parameter on EVERY `Agent` call — never rely on inheritance** (inheriting Opus is a 5-10x premium on work that rarely needs it).
 - **PR-shipping splits across tiers**: planning phase + iteration loops (incl. the §1c review loop, CR responses, fix-push, rebases) -> **Opus**; implementation phase (writing the diff, tests/lint/build, opening the PR, label-mirror, `gh`/`git` mechanics) -> **Sonnet**. Mechanical single steps within an iteration loop stay Haiku/Sonnet. Compact tier guide:
