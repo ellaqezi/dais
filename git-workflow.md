@@ -78,6 +78,18 @@ If the review finds issues, fix them in the same staged changeset — do not com
 
 After committing, run a quick sanity scan (`git show HEAD`) to catch anything the pre-commit loop missed. If this finds issues, treat it as a process failure (the pre-commit loop should have caught them). Fix-forward in a new commit only when strictly necessary (e.g., pre-commit hook caught a legitimate issue that required the commit to land first).
 
+## Rate-limit handling — always schedule a retry cron, never stall
+
+When any operation is throttled — a `429` / `403 secondary rate limit` / "rate limit" / "usage limit" / "try again later" from the GitHub API, CodeRabbit, the model/API itself, or any CLI reporting a cooldown — do NOT abandon the work and do NOT block the session busy-waiting. **Always spin up a cron that retries shortly:**
+
+- **Create a cron on a ~2-minute cadence** (`CronCreate`, e.g. `*/2 * * * *`) whose job is to re-attempt the throttled operation. Rate-limit cooldowns are typically a few minutes, so a 2-minute tick retries soon after the window clears without hammering the limit.
+- **Each firing checks first, then retries.** If the limit has cleared, run the retry; if still limited, log and wait for the next tick (back the effective retry off toward "a few minutes" by skipping ticks when the provider returns a `Retry-After`).
+- **Self-terminate.** Once the operation succeeds (or hits a terminal non-retryable state), the cron deletes itself (`CronDelete`). A retry cron must never outlive the work it was created for.
+- **Cap and escalate.** Give up after a sensible ceiling (e.g. ~24h for a CR review, much shorter for interactive work) and escalate to the user rather than retrying forever.
+- **One cron per throttled operation**, named so it is identifiable (e.g. `retry-<operation>-<id>`). Don't fold unrelated retries into one cron.
+
+This sits on top of, not instead of, any in-agent soft-retry (e.g. the cr-watch "sleep 120s, retry" in §2): the in-agent sleep handles transient blips within a live agent, while the cron survives the agent or session being reaped mid-cooldown, so progress resumes even if the original process is gone.
+
 ## Post-push CI watcher (background agent)
 
 After every `git push` that publishes new commits, immediately enumerate **all** GitHub Actions workflow runs triggered by the push and launch **one background agent per run** to monitor each independently. A single commit typically triggers multiple workflows (build, lint, test matrix, terraform validate, security scan, deploy) — they run in parallel, fail independently, and need fixes targeted at different parts of the codebase. A single watcher agent serialising across all of them would block on the slowest, miss parallel failures, and conflate diagnoses.
@@ -137,7 +149,7 @@ Total: **3+ background agents per PR** (one per CI run + cr-watch + merge-watch)
 Spawn a background `Agent` named `cr-watch-<pr-#>` (`model: haiku` — polling, rate-limit handling, and the §3 triage into Actionable/Stylistic/Nitpick are all rubric-driven; **re-spawn fix commits on Opus** — CR-loop fix commits are an iteration loop per CLAUDE.md §2 and run on Opus regardless of how localised the diff looks, because the triage call about which findings to fix vs. dismiss-with-justification, and whether a "tiny fix" reveals an architectural gap, is the judgement that Sonnet has empirically gotten wrong here. Step down to Haiku/Sonnet only when applying a fully-prescribed diff verbatim with no judgement involved) that:
 
 - Polls `gh api repos/<owner>/<repo>/pulls/<#>/comments` and `gh pr view <#> --json reviews` every **60–120s** (never faster — CodeRabbit's own backend rate-limits review processing and aggressive polling won't make the review come faster).
-- Treats `429`, `403 secondary rate limit`, or any "rate limit" string in the response body as a **soft** error: log, sleep 120s, retry. Do not escalate. Rate-limit responses are normal during high-traffic windows; a watcher that escalates on every 429 wastes user attention.
+- Treats `429`, `403 secondary rate limit`, or any "rate limit" string in the response body as a **soft** error: log, sleep 120s, retry. Do not escalate. Rate-limit responses are normal during high-traffic windows; a watcher that escalates on every 429 wastes user attention. If the cooldown is long or the agent may be reaped before it clears, also schedule a retry cron per §"Rate-limit handling" so progress resumes even if this watcher dies mid-wait.
 - Stops polling once one of these terminal states is reached:
   - CodeRabbit posts a review (success — proceed to §3).
   - The PR is closed without merging (terminal — clean up, exit).
