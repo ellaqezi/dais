@@ -280,6 +280,16 @@ File follow-up issues for out-of-scope items
 
 All four watcher classes (`cr-watch-*`, `ci-watch-*`, `merge-watch-*`, plus any project-specific deploy-watch) run in background — the main session never blocks on PR review and continues with the next task.
 
+## CR pattern memory
+
+When CodeRabbit finishes its review pass on any PR, before pushing fix commits, scan the per-project `memory/` directory (under `~/.claude/projects/<project-slug>/memory/`) and apply any matching `feedback_*.md` rules to the branch proactively. This catches patterns that were previously flagged and agreed upon before CR raises them again.
+
+After all CR findings from a given pass are addressed, evaluate each one: if it represents a recurring class of issue (style / idiom / cross-cutting concern -- NOT a one-off PR-specific bug), write a new `feedback_<slug>.md` entry following the schema in that project's `MEMORY.md`. Before creating a new file, search existing entries to avoid duplicates -- prefer updating the `**Why:**` line of an existing entry with the new PR citation rather than creating a parallel entry.
+
+The quality bar for a new memory entry: a clear one-line rule + a `**Why:**` with at least one PR citation + a `**How to apply:**` that names the concrete code location or pattern to scan for. Entries that are too vague to trigger a specific check are not useful. One-off PR-specific bugs (a typo, a logic error unique to this PR's feature, a test fixture that was just wrong) do not qualify.
+
+This keeps the memory garden growing and prevents the same nit from being raised in every future PR that touches the same code surface.
+
 ## Hooks & docs
 
 - **Pre-commit hooks**: projects must have hooks for linting, formatting, and tests. Never skip with `--no-verify`.
