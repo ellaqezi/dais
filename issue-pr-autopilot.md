@@ -1,10 +1,10 @@
 # Issue -> PR Autopilot (scheduled, multi-routine, multi-tier)
 
-A continuous delivery loop driven by GitHub issue labels. **Multiple** scheduled
+A continuous delivery loop driven by GitHub issue labels. **Two** scheduled
 **remote** Claude Code agents (created via the `schedule` skill / `RemoteTrigger`)
-fire on staggered crons, plan and open PRs for eligible issues, and stamp labels
-that act as the state machine. The label *is* the dedup guard and the handoff
-medium between tiers.
+fire on staggered 4-hourly crons, plan and open PRs for eligible issues, and stamp
+labels that act as the state machine. The label *is* the dedup guard and the
+handoff medium between tiers.
 
 This file is the source of truth for the per-repo config and the two routine
 prompts (`issue-pr-autopilot.plan.prompt.md` and
@@ -34,9 +34,11 @@ mechanical implementation, conflict-resolution, and CR-advance phases. This is
 cost-optimal: Opus runs only the short planning phase, never the long
 implement/CR loops.
 
-The `schedule` API floor is **1 hour** (`*/30` is rejected), but multiple routines
-can run at different minute-offsets. Staggering two planners and two workers within
-the hour roughly doubles throughput under the floor.
+The `schedule` API floor is **1 hour** (`*/30` is rejected), and claude.ai
+schedules are capped at approximately **15 routine fires per day** (account-wide).
+Running four routines at 15-minute offsets would consume 96 fires/day -- far over
+that cap. The 4-hour cadence with two routines (6 planner + 6 worker = 12 fires/day)
+fits comfortably within the budget. See the "Run-budget" section below.
 
 > **Runtime caveat (load-bearing):** remote scheduled agents run in Anthropic's
 > cloud, isolated, with their **own git checkout and zero access to a developer's
@@ -70,39 +72,47 @@ set (it records that a plan branch exists); the worker layers `pr-created` on to
 rather than swapping labels, so the create-dedup guard (`pr-created`) and the
 plan-claim guard (`plan-ready`) are independent and monotonic.
 
-## Routines (4 total: 2 Opus planners + 2 Sonnet workers, staggered)
+## Routines (2 total: 1 Opus planner + 1 Sonnet worker, staggered 30 min apart)
 
-All four routines run in environment **Default** (`anthropic_cloud`,
+Both routines run in environment **Default** (`anthropic_cloud`,
 `env_01DCb7bHtxWMDQZ8MBr67maL`), with two git sources (the target repo +
 `LeanerCloud/dotclaude`) and tools `[Bash, Read, Write, Edit, Glob, Grep]`. The
-planners run `issue-pr-autopilot.plan.prompt.md`; the workers run
-`issue-pr-autopilot.worker.prompt.md`. Offsets stagger plan -> work -> plan -> work
-across the hour so a plan from `:00` can be implemented at `:15`, and a plan from
-`:30` at `:45`.
+planner runs `issue-pr-autopilot.plan.prompt.md`; the worker runs
+`issue-pr-autopilot.worker.prompt.md`. The 30-minute offset staggers plan -> work
+within the same 4-hour slot: the planner fires at the top of each 4-hour window,
+the worker fires 30 minutes later in the same window so a fresh plan is ready before
+the worker acts.
 
-| Routine | Cron (UTC) | Model | Prompt | Role |
-|---|---|---|---|---|
-| `cudly-autopilot-plan-a` | `0 * * * *` | latest available Opus model | `issue-pr-autopilot.plan.prompt.md` | plan top eligible issue(s) |
-| `cudly-autopilot-work-a` | `15 * * * *` | latest available Sonnet model | `issue-pr-autopilot.worker.prompt.md` | reconcile + conflict-resolve + CR-advance + implement |
-| `cudly-autopilot-plan-b` | `30 * * * *` | latest available Opus model | `issue-pr-autopilot.plan.prompt.md` | plan top eligible issue(s) |
-| `cudly-autopilot-work-b` | `45 * * * *` | latest available Sonnet model | `issue-pr-autopilot.worker.prompt.md` | reconcile + conflict-resolve + CR-advance + implement |
+| Routine | Cron (UTC) | Model | Prompt | Routine ID | Role |
+|---|---|---|---|---|---|
+| `cudly-autopilot-plan` | `0 */4 * * *` | latest available Opus model | `issue-pr-autopilot.plan.prompt.md` | `trig_01PwHdsKE5bsbrQJRkYJjZAd` | plan top eligible issue(s) |
+| `cudly-autopilot-worker` | `30 */4 * * *` | latest available Sonnet model | `issue-pr-autopilot.worker.prompt.md` | `trig_01GjFaCDmu7moBS6jmBkLa3B` | reconcile + conflict-resolve + CR-advance + implement |
+
+Both are currently **disabled** (pending validation).
 
 > Set the planner model to the **current latest Opus model id** and the worker to
 > the **current latest Sonnet model id** at routine-creation time. Refresh both
 > together when a newer generation ships so they stay on the same generation.
 
+> **Earlier exploration routines:** `cudly-autopilot-plan-30` and
+> `cudly-autopilot-worker-45` were created during design exploration and are no
+> longer part of the active design. Delete them via the routines UI at
+> https://claude.ai/code/routines (no API delete endpoint exists).
+
 ### RemoteTrigger create-bodies
 
 Each routine is created with the shape below. Generate a fresh lowercase v4 UUID
-for `events[].data.uuid` per routine. Substitute `CRON`, `MODEL`, and
-`PROMPT_FILE_CONTENTS` per the table above (`session_context.message.content` is
-the full text of the prompt file inlined, since the cloud agent is cold). The two
-git sources let the cold agent read this repo's guidelines plus the target repo.
+for `events[].data.uuid` per routine. Substitute `MODEL` and `PROMPT_FILE_CONTENTS`
+per the table above (`session_context.message.content` is the full text of the
+prompt file inlined, since the cloud agent is cold). The two git sources let the
+cold agent read this repo's guidelines plus the target repo.
+
+**Planner** (`cudly-autopilot-plan`, cron `0 */4 * * *`):
 
 ```json
 {
-  "name": "cudly-autopilot-plan-a",
-  "cron_expression": "0 * * * *",
+  "name": "cudly-autopilot-plan",
+  "cron_expression": "0 */4 * * *",
   "enabled": false,
   "job_config": {
     "ccr": {
@@ -129,18 +139,14 @@ git sources let the cold agent read this repo's guidelines plus the target repo.
 }
 ```
 
-- `cudly-autopilot-plan-b`: identical except `name`, `cron_expression: "30 * * * *"`,
-  and a fresh `uuid`. Same (latest available Opus) model and plan prompt.
-- `cudly-autopilot-work-a`: same shape with `name: "cudly-autopilot-work-a"`,
-  `cron_expression: "15 * * * *"`, `model: "<current latest Sonnet model id>"`,
-  `message.content` = full text of `issue-pr-autopilot.worker.prompt.md`, and a
-  fresh `uuid`.
-- `cudly-autopilot-work-b`: same as work-a except `name` and
-  `cron_expression: "45 * * * *"`, and a fresh `uuid`.
+**Worker** (`cudly-autopilot-worker`, cron `30 */4 * * *`): same shape with
+`name: "cudly-autopilot-worker"`, `cron_expression: "30 */4 * * *"`,
+`model: "<current latest Sonnet model id>"`, `message.content` = full text of
+`issue-pr-autopilot.worker.prompt.md`, and a fresh `uuid`.
 
-Create all four with `enabled: false`, do one `run` of each to confirm the cloud
-env can clone both sources + plan / implement / open a PR + edit labels, then
-`enable`. You **cannot delete** via API; use https://claude.ai/code/routines.
+Create both with `enabled: false`, do one `run` of each to confirm the cloud env
+can clone both sources + plan / implement / open a PR + edit labels, then `enable`.
+You **cannot delete** via API; use https://claude.ai/code/routines.
 
 ## Watcher model (scheduled context differs from a local session)
 
@@ -241,7 +247,7 @@ through GitHub state:
 - **Mitigations (all three required):**
   (a) **Stagger offsets so no two routines fire simultaneously** and each fire
   finishes within its slot - never schedule two routines at the same minute-offset
-  (the `:00/:15/:30/:45` grid above has zero simultaneous fires).
+  (planner at `:00`, worker at `:30` of each 4-hour window, zero simultaneous fires).
   (b) **Claim as the FIRST durable action**: the planner pushes the plan commit,
   posts the `autopilot-branch:` marker, and adds `plan-ready` immediately on
   selection; the worker adds `pr-created` at PR-open. This shrinks the TOCTOU
@@ -249,20 +255,18 @@ through GitHub state:
   (c) **Every downstream gate is idempotent** so a lost race degrades gracefully:
   worst case is a duplicate `auto/<issue>` branch, caught at the `pr-created` gate
   and cleaned up (close the orphan), per the double-plan caveat above.
-- **Throughput vs the 1h floor.** 15-minute activity = the FOUR staggered routines
-  on the `:00/:15/:30/:45` grid alternating Opus (plan) / Sonnet (worker); that
-  gives something happening every 15 minutes with ZERO simultaneous fires. To go
-  faster, **prefer raising the per-fire cap or adding target repos** over stacking
-  multiple routines at the same offset: simultaneous fires trade the correctness
-  margin above for throughput. Literal duplication of a routine at the same minute
-  buys nothing - a failed fire is retried by the next cycle anyway - and only adds
-  race risk.
+- **Throughput vs the 1h floor and run-budget.** With two routines at 4-hour
+  cadence, something happens every 30 minutes within each 4-hour window with
+  ZERO simultaneous fires. To go faster, **prefer raising the per-fire cap or
+  adding target repos** over adding more routines: each extra routine costs 6+
+  fires/day against the ~15/day account-wide cap (see "Run-budget" below).
+  Simultaneous fires also trade the correctness margin above for throughput.
 
 ## Per-repo config
 
 | Repo | Base branch | Eligibility (plan) | Plan cap/fire | Implement cap/fire | CR-advance cap/fire | Cadence | Status |
 |---|---|---|---|---|---|---|---|
-| `LeanerCloud/CUDly` | `feat/multicloud-web-frontend` | any `triaged` issue except `type/question`, `status/blocked`, `status/needs-info`, `needs-human` | 2 | 2 | none (all open in-flight PRs) | planners `0,30 * * * *`; workers `15,45 * * * *` (UTC) | disabled (pending validation) |
+| `LeanerCloud/CUDly` | `feat/multicloud-web-frontend` | any `triaged` issue except `type/question`, `status/blocked`, `status/needs-info`, `needs-human` | 2 | 2 | none (all open in-flight PRs) | every 4h (plan `:00` / worker `:30`), 12 runs/day | disabled (pending validation) |
 | other `LeanerCloud/*` | repo default unless stated | TBD | TBD | TBD | TBD | TBD | pending |
 | `cristim/*` | repo default | TBD | TBD | TBD | TBD | TBD | pending |
 
@@ -277,18 +281,39 @@ through GitHub state:
 - The `schedule` API floor is **1 hour** (`*/30` is rejected). Staggered offsets x
   caps is the spend lever; raising cadence means more routines, not finer crons.
 
+## Run-budget
+
+claude.ai scheduled routines are capped at approximately **~15 fires per day,
+account-wide** across ALL routines in the account. The current two-routine 4-hour
+design uses 6 planner + 6 worker = **12 fires/day**, leaving a small headroom of
+~3 fires/day for one-off manual `run` calls or transient extra loads.
+
+**Constraints that follow from this:**
+
+- Do NOT add more routines or raise the cadence (e.g. to 2-hour, or back to the
+  hourly grid) without first checking the remaining budget across all active
+  routines in the account.
+- If you also run other routines in the same account (e.g. a separate CR re-review
+  drip or a nightly sweep), each of those fires counts against the SAME ~15/day
+  cap. Prefer folding them into one of the existing routine phases: the worker's
+  CR-advance phase already re-triggers CodeRabbit on every in-flight PR, which
+  subsumes a separate CR drip routine.
+- The ~15/day figure is an observed practical cap, not a published hard limit;
+  treat it conservatively. Disable unused or exploratory routines promptly to
+  keep the budget stable.
+
 ## Operating the routines
 
 - Manage via the `schedule` skill (`RemoteTrigger`: list/get/create/update/run).
   You **cannot delete** via API; use https://claude.ai/code/routines.
-- **Always test first**: create all four disabled, do one `run` of each, confirm
+- **Always test first**: create both disabled, do one `run` of each, confirm
   the cloud env can clone both sources + plan / implement + open a PR + edit
   labels, then `enable`.
 - **Kill switch**: update `{enabled:false}` on a routine, or toggle in the routines
-  UI. **Disabling the worker routines orphans every triggered PR** (no other
-  process is the CR watcher), so the worker routines are the load-bearing half:
-  disable planners alone to pause new work while still draining in-flight PRs;
-  disable workers only when you intend to stop CR follow-up entirely.
+  UI. **Disabling the worker routine orphans every triggered PR** (no other
+  process is the CR watcher), so the worker routine is the load-bearing half:
+  disable the planner alone to pause new work while still draining in-flight PRs;
+  disable the worker only when you intend to stop CR follow-up entirely.
 
 ## Caveats and gotchas (load-bearing)
 
@@ -303,15 +328,17 @@ through GitHub state:
 - **Plan staleness.** A `plan-ready` branch can rot if the base advances; the
   worker rebases the `auto/<issue>` branch onto base and re-validates `plan.md`
   before implementing, re-planning inline or deferring if the plan has diverged.
-- **Rare double-plan race.** If both staggered planners grab the same issue before
-  either claim (`plan-ready`) lands, worst case is two `auto/<issue>-*` branches.
-  The worker implements exactly one (it reads the single `autopilot-branch:`
-  marker; if two markers exist it takes the newest and logs the duplicate), the
-  issue gets `pr-created` once, and the worker closes the orphan `auto/<issue>`
-  branch as cleanup.
+- **Rare double-plan race.** With a single planner routine, a concurrent double-plan
+  can only occur if the same planner fires twice (manual `run` while a scheduled
+  fire is in-flight). Worst case is two `auto/<issue>-*` branches. The worker
+  implements exactly one (it reads the single `autopilot-branch:` marker; if two
+  markers exist it takes the newest and logs the duplicate), the issue gets
+  `pr-created` once, and the worker closes the orphan `auto/<issue>` branch as
+  cleanup.
 - **Poison-item guard.** After **N consecutive autopilot failures** on the same
   issue (plan-or-implement), add `needs-human` so a bad item does not retry every
-  hour forever. Eligibility excludes `needs-human`. A human clears it once handled.
+  4 hours forever. Eligibility excludes `needs-human`. A human clears it once
+  handled.
 - **No subagents / no shared memory** in the cloud env. This is the reason the
   whole design is split into separate single-model routines instead of one
   routine that spawns tier-matched subagents.
