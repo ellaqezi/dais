@@ -302,18 +302,102 @@ design uses 6 planner + 6 worker = **12 fires/day**, leaving a small headroom of
   treat it conservatively. Disable unused or exploratory routines promptly to
   keep the budget stable.
 
-## Operating the routines
+## Creating and operating the routines
 
-- Manage via the `schedule` skill (`RemoteTrigger`: list/get/create/update/run).
-  You **cannot delete** via API; use https://claude.ai/code/routines.
-- **Always test first**: create both disabled, do one `run` of each, confirm
-  the cloud env can clone both sources + plan / implement + open a PR + edit
-  labels, then `enable`.
-- **Kill switch**: update `{enabled:false}` on a routine, or toggle in the routines
-  UI. **Disabling the worker routine orphans every triggered PR** (no other
-  process is the CR watcher), so the worker routine is the load-bearing half:
-  disable the planner alone to pause new work while still draining in-flight PRs;
-  disable the worker only when you intend to stop CR follow-up entirely.
+Follow these steps in order. Do not skip the prerequisite or the validation run.
+
+### Step 1 - Prerequisite: merge this PR first
+
+The two prompt files (`issue-pr-autopilot.plan.prompt.md` and
+`issue-pr-autopilot.worker.prompt.md`) must be on the `main` branch of
+`LeanerCloud/dotclaude` **before** you enable the routines. The cloud agent
+clones dotclaude's default branch on each fire; if the files are absent the
+routine STOPs with a "prompt missing" error by design.
+
+Do not enable either routine until this PR is merged into `main`.
+
+### Step 2 - Create both routines (disabled)
+
+The two routines already exist (created during design exploration):
+
+| Routine | ID | Cron | Model |
+|---|---|---|---|
+| `cudly-autopilot-plan` | `trig_01PwHdsKE5bsbrQJRkYJjZAd` | `0 */4 * * *` | latest available Opus |
+| `cudly-autopilot-worker` | `trig_01GjFaCDmu7moBS6jmBkLa3B` | `30 */4 * * *` | latest available Sonnet |
+
+Both are **disabled**. If you ever need to recreate them from scratch, use the
+`schedule` skill (`RemoteTrigger create`) with the JSON bodies documented in the
+"RemoteTrigger create-bodies" section above: environment `env_01DCb7bHtxWMDQZ8MBr67maL`,
+two git sources (CUDly + dotclaude), tools `[Bash, Read, Write, Edit, Glob, Grep]`,
+`enabled: false`, and `message.content` = the full text of the respective prompt
+file (the cold agent cannot read it from disk without it being inlined). Set
+planner model to the current latest Opus model id and worker to the current
+latest Sonnet model id.
+
+### Step 3 - Validate disabled-first
+
+Before enabling, do one manual `run` of the planner, then one manual `run` of
+the worker:
+
+```
+# planner
+schedule run trig_01PwHdsKE5bsbrQJRkYJjZAd
+
+# worker (after planner run completes)
+schedule run trig_01GjFaCDmu7moBS6jmBkLa3B
+```
+
+Confirm:
+- The cloud env clones both repos successfully.
+- The planner reads the prompt file from the dotclaude checkout, selects an
+  eligible issue, commits a plan branch, posts the `autopilot-branch:` marker,
+  and adds `plan-ready`. If no eligible issues exist, a one-line "nothing to
+  plan" summary is the expected output.
+- The worker reads its prompt, reconciles any in-flight PRs, and (if a
+  `plan-ready` issue exists) implements it, opens a PR, mirrors labels, and
+  triggers `@coderabbitai review`.
+- Neither run self-merges or pushes to `main` or `feat/multicloud-web-frontend`.
+
+Only after both validation runs pass: set `enabled: true` on each routine.
+
+### Step 4 - Run budget
+
+The account-wide cap is approximately **15 routine fires per day** across ALL
+routines. This design uses 6 planner + 6 worker = **12 fires/day**, leaving
+roughly 3 fires/day headroom for manual `run` calls.
+
+The hourly `cudly-cr-fullreview-drip` routine was **disabled** to stay within
+budget: the worker's CR-advance phase (Phase 3) already re-triggers CodeRabbit
+on every in-flight PR each fire, which subsumes a separate drip.
+
+Do not add routines or raise the cadence without first auditing the remaining
+budget across all active routines in the account.
+
+### Step 5 - Ongoing management
+
+- **Kill switch**: set `enabled: false` via `schedule update` or the routines
+  UI at https://claude.ai/code/routines. Prefer disabling the planner alone
+  (pauses new work; worker keeps draining in-flight PRs); disable the worker
+  only when you intend to stop CR follow-up entirely, because disabling the
+  worker orphans every triggered PR.
+- **Model updates**: when a newer Opus or Sonnet generation ships, update
+  `model` on both routines together via `schedule update` so they stay on the
+  same generation.
+- **No API delete**: the `RemoteTrigger` API has no delete endpoint. Remove
+  routines via the UI at https://claude.ai/code/routines only.
+
+### Step 6 - Cleanup: delete leftover exploration routines
+
+Delete these paused exploration routines via the routines UI (no API delete):
+
+| Name | ID |
+|---|---|
+| `cudly-autopilot-plan-30` | `trig_01S76xzpHdbje4nTksEkSRNt` |
+| `cudly-autopilot-worker-45` | `trig_012PZB6Mx7zLQ9hWmrZFg4c5` |
+| `cudly-issue-pr-autopilot` (superseded single-routine) | (check routines UI) |
+
+Navigate to https://claude.ai/code/routines, locate each by name or ID, and
+delete.
 
 ## Caveats and gotchas (load-bearing)
 
@@ -335,10 +419,11 @@ design uses 6 planner + 6 worker = **12 fires/day**, leaving a small headroom of
   markers exist it takes the newest and logs the duplicate), the issue gets
   `pr-created` once, and the worker closes the orphan `auto/<issue>` branch as
   cleanup.
-- **Poison-item guard.** After **N consecutive autopilot failures** on the same
+- **Poison-item guard.** After **3 consecutive autopilot failures** on the same
   issue (plan-or-implement), add `needs-human` so a bad item does not retry every
-  4 hours forever. Eligibility excludes `needs-human`. A human clears it once
-  handled.
+  4 hours forever. (N=3 for CUDly; adjust per repo in the per-repo config table
+  based on tolerance for retry cost.) Eligibility excludes `needs-human`. A human
+  clears it once handled.
 - **No subagents / no shared memory** in the cloud env. This is the reason the
   whole design is split into separate single-model routines instead of one
   routine that spawns tier-matched subagents.
