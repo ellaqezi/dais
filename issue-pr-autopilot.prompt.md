@@ -7,13 +7,14 @@ A second repo LeanerCloud/dotclaude is cloned into your workspace. Locate it (e.
 - triage.md - the full label rubric for any issue/PR you create
 - coding-standards.md, conventions.md - code style (Go/TS/Terraform)
 - worktrees.md, subagent-strategy.md, tool-usage.md - process rules
-- commands/ - including the pr-iterate flow for driving PRs to merge-ready
+- commands/ and skills - including the pr-iterate flow for driving PRs to merge-ready
 Precedence: dotclaude global rules + the GLOBAL HARD CONSTRAINTS below are non-negotiable; the target repo's own CLAUDE.md/CONTRIBUTING.md win only for repo-specific code style and build/test commands.
 
 ## Repository config (CUDly)
 - Repo: LeanerCloud/CUDly
 - Base branch for ALL PRs: feat/multicloud-web-frontend (NEVER target main or any shared branch)
-- Per-fire cap: open at most 3 new PRs this run
+- Per-fire create cap: open at most 3 new PRs this run
+- CR-advance cap: NONE - advance every open autopilot PR this run
 - Eligibility: open issues that are `triaged` and DO NOT carry `type/question`, `status/blocked`, or `status/needs-info`
 
 ## First: load the target repo's conventions
@@ -31,13 +32,20 @@ Create the labels if missing:
 1. gh api user --jq .login ; confirm repo access.
 2. Ensure both labels exist.
 3. Count open issues lacking pr-created: gh issue list --repo LeanerCloud/CUDly --state open --search '-label:pr-created' --limit 500 --json number --jq length
-4. List issues with pr-created but not pr-merged (reconcile candidates).
-5. If BOTH the create-queue is empty AND there are no reconcile candidates -> write a one-line 'nothing to do' summary and STOP.
+4. List issues with pr-created but not pr-merged (reconcile + advance candidates).
+5. If the create-queue is empty AND there are no pr-created-not-merged issues -> write a one-line 'nothing to do' summary and STOP.
 
 ## Phase 1 - Reconcile (do this first; cheap)
 For each open issue labelled pr-created but not pr-merged: find its linked PR. NOTE: PRs here target a non-default base, so GitHub closingIssuesReferences is EMPTY and issues are NOT auto-closed. Detect the link by scanning PR bodies for a closing reference to this issue number: a closing keyword near #<issue> (close/fix/resolve/address...), a (#<issue>) parenthetical, or a PR whose title mirrors the issue title. If the linked PR is MERGED -> gh issue edit <issue> --add-label pr-merged. Never remove pr-created.
 
-## Phase 2 - Select (capped at 3)
+## Phase 1b - Advance open PRs through CodeRabbit (NO cap - process ALL of them)
+For EVERY open issue labelled pr-created but not pr-merged whose linked PR is still OPEN (not merged, not closed), drive it one CR round closer to merge-ready using the pr-iterate flow (dotclaude commands/ + skills pr-iterate):
+1. Pull CR signal: the PR's coderabbitai[bot] reviews and inline comments, plus any human review comments. Also read mergeStateStatus.
+2. If the latest CR review says 'Actionable comments posted: 0' (or an LGTM body) AND there are no unaddressed human review comments AND mergeStateStatus is not DIRTY/CONFLICTING -> nothing to do; leave it for the human to merge; skip.
+3. Otherwise run pr-iterate: if DIRTY/CONFLICTING, rebase on origin/feat/multicloud-web-frontend and resolve conflicts (STOP + log if a conflict needs a semantic human decision). Triage each CR finding into exactly one of: fix-in-this-PR / skip-stale (cite the fixing SHA) / skip-out-of-scope (file a fully-triaged follow-up issue with the full rubric, cite the CR comment URL) / skip-CR-misread (cite what the line actually is). Apply fixes minimally, add a regression test for any real bug, run build/lint/tests + pre-commit (NEVER --no-verify), commit via git commit -F, push the PR's OWN branch only, then post a per-finding summary comment ending with '@coderabbitai review' (NEVER @coderabbitai resolve).
+4. Process ALL qualifying PRs this fire (no cap). If CR is rate-limited (pr-iterate Phase 5b), record it and move on; the next hourly fire retries. Do NOT self-merge.
+
+## Phase 2 - Select new work (create cap 3)
 1. Candidates: gh issue list --repo LeanerCloud/CUDly --state open --search '-label:pr-created label:triaged -label:type/question -label:status/blocked -label:status/needs-info' --limit 200 --json number,title,labels
 2. Rank highest-priority first: priority band (p0->p3) -> urgency -> impact -> unblocks-others -> effort (cheapest first). Use the label values.
 3. Take the top 3. Log the ranked shortlist and which 3 you chose.
@@ -58,6 +66,7 @@ For each of the (<=3) chosen issues:
     gh pr edit $PR --repo LeanerCloud/CUDly --add-label "$LBLS"
     VERIFY the PR now carries those labels (gh pr view $PR --json labels). NEVER put pr-created/pr-merged on the PR (those are issue-state labels). Then add pr-created to the ISSUE: gh issue edit <issue> --add-label pr-created.
 11. Trigger CodeRabbit: gh pr comment $PR --body "@coderabbitai review". Do NOT use @coderabbitai resolve. Do NOT merge - a human merges.
+12. In-run CR wait (bounded - a single cycle). After triggering CR, wait about 5 minutes (sleep 300), then pull CR's latest review for $PR ONCE. If CR posted actionable findings within that window, address them now via the Phase 1b flow (one pass: triage -> fix -> build/test -> push the PR's own branch -> re-ping '@coderabbitai review'). If CR has NOT responded within ~5 minutes, do NOT keep waiting - leave the PR for the next hourly fire's Phase 1b. Never exceed one 5-minute wait per PR (bounds session length).
 
 ## GLOBAL HARD CONSTRAINTS (non-negotiable)
 - NO em-dashes (U+2014) anywhere - chat, code, comments, commits, PR text. Use commas/hyphens/colons.
@@ -66,8 +75,8 @@ For each of the (<=3) chosen issues:
 - Only ever push your own feature branch; never push main or feat/multicloud-web-frontend.
 - Never self-merge; never @coderabbitai resolve.
 - EVERY opened PR MUST end with its issue's triage rubric mirrored onto it (Phase 3 step 10) and its body free of any Claude/attribution footer (step 9). Self-check both before moving to the next issue.
-- Respect the cap of 3 new PRs even if more issues qualify; list deferred issues.
+- Respect the create cap of 3 new PRs even if more issues qualify; list deferred issues. Phase 1b CR-advance has NO cap.
 - Every selected issue ends as: an opened PR (+pr-created, +mirrored labels, footer stripped) OR an explicit logged skip.
 
 ## Output - end with a run summary
-Report: counts (create-queue size, reconcile candidates); which issues were stamped pr-merged; which (<=3) issues were selected; for each selected issue either the PR # opened with two flags [footer-strip: OK|persists] [labels-mirrored: OK|FAILED] OR the skip reason; and the deferred shortlist. Be concise and factual.
+Report: counts (create-queue size, pr-created-not-merged count); Phase 1 issues stamped pr-merged; Phase 1b per-PR advance result (PR #, findings addressed / re-pinged / nothing-to-do / rate-limited / stopped-needs-human); Phase 2-3 which (<=3) issues were selected and for each either the PR # opened with two flags [footer-strip: OK|persists] [labels-mirrored: OK|FAILED] (and whether the in-run CR wait addressed anything) OR the skip reason; and the deferred shortlist. Be concise and factual.
