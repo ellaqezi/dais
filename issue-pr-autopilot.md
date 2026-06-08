@@ -47,6 +47,13 @@ Labels are created on first fire if missing.
    find its linked PR (closing-keyword / `(#N)` / title-mirror in a PR body, since
    CUDly PRs target a non-default base so auto-close does not fire). If MERGED, add
    `pr-merged`. Never remove `pr-created`.
+1b. **Advance open PRs (no cap).** For each `pr-created` and not `pr-merged` issue
+   whose linked PR is still OPEN, drive it one CR iteration closer to merge-ready
+   via the pr-iterate flow: pull CR signal, triage findings (fix / skip with
+   justification / file follow-up), apply fixes minimally, push. Before re-pinging
+   CR: verify a live `cr-watch-<pr-#>` agent exists; spawn one if missing. Only
+   then re-ping `@coderabbitai review`. Process ALL qualifying PRs this fire;
+   defer only if CR is rate-limited. Do NOT self-merge.
 2. **Select (capped).** Open issues without `pr-created`, filtered to eligible,
    ranked by `triage.md` (priority -> urgency -> impact -> unblocks -> effort).
    Take the top N = per-fire cap.
@@ -54,17 +61,19 @@ Labels are created on first fire if missing.
    standards; five-dimension self-review; conventional commits via `git commit -F`;
    open a PR with `Closes #<issue>`; **strip any auto-injected Claude footer**;
    **mirror the issue's triage rubric onto the PR**; add `pr-created` to the issue;
-   trigger `@coderabbitai review`.
+   spawn `cr-watch-<pr-#>` background agent AND trigger `@coderabbitai review` as
+   one indivisible action (trigger without watcher is a defect per
+   `git-workflow.md` §"Post-PR review loop").
 4. **Hand off.** A human merges (no self-merge). The next fire's Phase 1 stamps
    `pr-merged`.
 
 ## Per-repo config
 
-| Repo | Base branch | Eligibility | Cap/fire | Cadence | Status |
-|---|---|---|---|---|---|
-| `LeanerCloud/CUDly` | `feat/multicloud-web-frontend` | any `triaged` issue except `type/question`, `status/blocked`, `status/needs-info` | 3 | hourly (`0 * * * *` UTC) | live (disabled until validated) |
-| other `LeanerCloud/*` | repo default unless stated | TBD | TBD | TBD | pending |
-| `cristim/*` | repo default | TBD | TBD | TBD | pending |
+| Repo | Base branch | Eligibility | New-PR cap/fire | CR-advance cap/fire | Cadence | Status |
+|---|---|---|---|---|---|---|
+| `LeanerCloud/CUDly` | `feat/multicloud-web-frontend` | any `triaged` issue except `type/question`, `status/blocked`, `status/needs-info` | 3 | none (all open PRs) | hourly (`0 * * * *` UTC) | disabled (pending validation) |
+| other `LeanerCloud/*` | repo default unless stated | TBD | TBD | TBD | TBD | pending |
+| `cristim/*` | repo default | TBD | TBD | TBD | TBD | pending |
 
 ## Cost controls
 
