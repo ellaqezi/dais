@@ -105,9 +105,17 @@ Versioning: https://semver.org/
 
 1. Code of Conduct reference (link to CODE_OF_CONDUCT.md — emit stub if absent)
 2. Development setup (reference README)
-3. Branch strategy (default: `main` protected, feature branches from `main`)
+3. Branch strategy and git worktree workflow:
+   - Declare the worktree-per-issue model from ADR-0003
+   - Include the three commands engineers use daily:
+     ```bash
+     git worktree add ../<project>-<issue-id> feature/<issue-id>-<slug>
+     git worktree list
+     git worktree remove ../<project>-<issue-id>
+     ```
+   - Include the branch taxonomy table (feature/ fix/ chore/ release/)
 4. Commit message format (Conventional Commits: `feat:`, `fix:`, `chore:`, etc.)
-5. PR process: self-review checklist, required reviewers, CI must pass
+5. PR process: self-review checklist, required reviewers, CI must pass, post-execution-reviewer must ACCEPT
 6. How to run tests and linting before pushing
 
 ---
@@ -134,7 +142,7 @@ After all files, emit a summary table of deliverables.
   Reason: This request falls outside the documentation scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -142,7 +150,7 @@ context:
   project_root: /Users/jane/new-api
 ```
 
-**Output:**
+**Output**:
 
 ```markdown
 // FILE: README.md

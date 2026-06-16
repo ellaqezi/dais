@@ -177,7 +177,7 @@ Reply with one of:
 - If the context object from derive-agent is missing HALT-level fields, emit the gap list
   and halt. Do not construct a partial manifest.
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -189,7 +189,7 @@ context:
   gaps: []
 ```
 
-**Output:**
+**Output**:
 
 ```
 ╔══════════════════════════════════════════════════════════════╗

@@ -126,7 +126,7 @@ HANDOFFS
   Reason: This request falls outside the skeleton scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -135,7 +135,7 @@ context:
   project_root: /Users/jane/new-api
 ```
 
-**Output:**
+**Output**:
 
 ```
 // FILE: package.json

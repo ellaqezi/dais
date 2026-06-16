@@ -122,7 +122,7 @@ Then emit the recommended execution sequence.
   Reason: This request falls outside the remediation planning scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 gaps:
@@ -134,7 +134,7 @@ gaps:
     fix_summary: "Run DAIS ci-cd-agent"
 ```
 
-**Output:**
+**Output**:
 
 ```
 REMEDIATION PLAN: GAP-H01 — No CI pipeline present

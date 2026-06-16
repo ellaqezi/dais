@@ -163,7 +163,7 @@ gaps:
   Reason: This request falls outside the gap register scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 handoff:
@@ -171,7 +171,7 @@ handoff:
     - {id: F01, pillar: CI/CD, title: "No CI pipeline", severity: HIGH, evidence: "ABSENT: .github/workflows/"}
 ```
 
-**Output:**
+**Output**:
 
 ```
 GAP REGISTER — /Users/jane/legacy-api

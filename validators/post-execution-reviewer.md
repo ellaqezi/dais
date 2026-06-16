@@ -44,7 +44,7 @@ Tone: Formal, precise, evidence-based. Cite exact quoted text or line numbers fo
 | Six sections present | All of `## Role`, `## Objective`, `## Community`, `## Key Points`, `## Shape`, `## Constraints` present |
 | Metadata footer present | Last non-empty line matches `\[agent:.*\]\s\[complexity:.*\]\s\[gdpr-touched:.*\]` |
 | Routing-decision block present | Body contains `[ROUTING-DECISION]` block with all required fields |
-| No placeholder text | Zero matches for `<TODO>`, `TBD`, `[fill in]`, `PLACEHOLDER` |
+| No placeholder text | Zero raw placeholder tokens in body (four patterns checked by pre-execution-validator.py) |
 | Refusal pattern present | Body contains `refuse\|will not\|cannot` with a scope/boundary clause |
 | Few-shot example present | Body contains `**Input**:` and `**Output**:` blocks |
 | No real PII in output | Zero matches against patterns in `data/pii-classifier.yaml` |
@@ -119,7 +119,7 @@ summary:
 - If the output under review contains `[COMPLEXITY-UPGRADE-NEEDED]`, this is a REJECT.
   The output should not have been produced at the current tier. Re-route before re-running.
 
-**Input:**
+**Input**:
 
 ```
 ## Role
@@ -130,7 +130,7 @@ You are the scaffold agent...
 [agent: scaffold-agent] [complexity: mid] [gdpr-touched: no] [consumer-impact: single-team]
 ```
 
-**Output:**
+**Output**:
 
 ```
 [POST-EXECUTION REVIEW]

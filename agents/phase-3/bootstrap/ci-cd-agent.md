@@ -104,7 +104,7 @@ After all files, emit:
   Reason: This request falls outside the CI/CD pipeline scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -112,7 +112,7 @@ context:
   ci_platform: github-actions
 ```
 
-**Output:**
+**Output**:
 
 ```yaml
 # FILE: .github/workflows/ci.yml

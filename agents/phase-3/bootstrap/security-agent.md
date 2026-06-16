@@ -145,7 +145,7 @@ SECURITY AUDIT SUMMARY
   Reason: This request falls outside the security scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -156,7 +156,7 @@ context:
   secrets_in_repo: false
 ```
 
-**Output:**
+**Output**:
 
 ```markdown
 // FILE: docs/security/threat-model.md

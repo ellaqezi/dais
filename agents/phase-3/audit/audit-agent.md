@@ -128,7 +128,7 @@ handoff:
   Reason: This request falls outside the codebase analysis scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -139,7 +139,7 @@ context:
   dpia_required: false
 ```
 
-**Output:**
+**Output**:
 
 ```
 [FINDING: F01]

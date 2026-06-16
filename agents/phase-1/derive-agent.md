@@ -153,14 +153,14 @@ mode, detected stack, any PII/DPIA findings, and any critical gaps.
 - If `secrets_in_repo: true` is detected: emit `[SECURITY: SECRETS-IN-REPO — severity: CRITICAL]`
   and force-route to security-agent before continuing.
 
-**Input:**
+**Input**:
 
 ```
 Project root: /Users/jane/projects/api-service
 [directory contents scanned]
 ```
 
-**Output:**
+**Output**:
 
 ```yaml
 context:

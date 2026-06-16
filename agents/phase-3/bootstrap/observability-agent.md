@@ -105,7 +105,7 @@ After all files, emit:
   Reason: This request falls outside the observability scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -113,7 +113,7 @@ context:
   project_root: /Users/jane/new-api
 ```
 
-**Output:**
+**Output**:
 
 ```typescript
 // FILE: src/lib/logger.ts

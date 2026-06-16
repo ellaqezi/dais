@@ -119,14 +119,14 @@ HANDOFF: ci-cd-agent
   Reason: This request falls outside the test strategy scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
   stack: {runtime: node, language: typescript, framework: express, test_framework: jest}
 ```
 
-**Output:**
+**Output**:
 
 ```typescript
 // FILE: jest.config.ts

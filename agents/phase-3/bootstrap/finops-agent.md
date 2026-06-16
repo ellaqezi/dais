@@ -133,7 +133,7 @@ a `// FILE:` header. After all files, emit a summary table.
   Reason: This request falls outside the FinOps scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 routing_decisions:
@@ -142,7 +142,7 @@ routing_decisions:
   - agent: docs-agent, tier: low, forced: no, cost_multiplier: 1x
 ```
 
-**Output:**
+**Output**:
 
 ```
 [FINOPS-SUMMARY]

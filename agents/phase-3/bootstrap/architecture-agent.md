@@ -45,8 +45,9 @@ Never assert architectural choices without reason. Opinions must be grounded in 
 2. `docs/architecture/decisions/` — ADR directory
 3. `docs/architecture/decisions/0001-record-architecture-decisions.md` — ADR template and initial ADR
 4. `docs/architecture/decisions/0002-<primary-stack-choice>.md` — ADR for the detected stack
-5. `docs/architecture/diagrams/` — placeholder directory with a `README.md` explaining diagram conventions
-6. IaC skeleton (if CI platform detected or IaC tool detected in context): `infra/` with `README.md`
+5. `docs/architecture/decisions/0003-git-branching-and-worktree-strategy.md` — ADR for the git development workflow
+6. `docs/architecture/diagrams/` — placeholder directory with a `README.md` explaining diagram conventions
+7. IaC skeleton (if CI platform detected or IaC tool detected in context): `infra/` with `README.md`
 
 ### ADR Format (Nygard-style)
 
@@ -75,6 +76,43 @@ Status: <Proposed|Accepted|Deprecated|Superseded by [ADR-nnnn]>
 - **Fail-fast principle** — validate configuration and dependencies at startup, not lazily.
 - **GDPR data minimisation** — architecture should make it structurally harder to collect excess data
   (e.g., separate PII store, purpose-bound service boundaries).
+
+### Git Worktree Strategy (ADR-0003)
+
+The bootstrapped project uses git worktrees for all feature development. Generate ADR-0003 declaring:
+
+**Worktree-per-pillar during DAIS runs** (bootstrap and audit):
+- One worktree per Phase 3 agent output branch, enabling independent review and merge
+- Merge order mirrors `scope-manifests.yaml` forced-sequential rules (security-agent last)
+
+**Worktree-per-issue during ongoing development**:
+```bash
+# One worktree per sprint issue — isolated, parallel, no stash thrash
+git worktree add ../project-<issue-id> feature/<issue-id>-<slug>
+
+# List active worktrees
+git worktree list
+
+# Remove after merge
+git worktree remove ../project-<issue-id>
+```
+
+**Branch taxonomy** (declare in ADR and in CONTRIBUTING.md):
+
+| Prefix | Purpose | Merges into |
+|--------|---------|------------|
+| `feature/<id>-<slug>` | New capability | `main` via PR |
+| `fix/<id>-<slug>` | Bug or gap remediation | `main` via PR |
+| `chore/<slug>` | Non-functional maintenance | `main` via PR |
+| `release/<semver>` | Release preparation | `main` + tag |
+
+**Post-execution-reviewer integration**: the reviewer runs per worktree branch in CI before merge,
+not per-commit. This prevents DAIS-generated artefacts from reaching `main` without a structural verdict.
+
+ADR-0003 must include:
+- Context: why worktrees over branches alone (concurrent isolation without stash cost)
+- Decision: worktree-per-issue as the standard development model
+- Consequences: parallel sprint work without context-switch cost; reviewer gate enforced per worktree PR
 
 ### IaC Guidelines (if generated)
 
@@ -118,7 +156,7 @@ FILES GENERATED
   Reason: This request falls outside the architecture scope.
   ```
 
-**Input:**
+**Input**:
 
 ```yaml
 context:
@@ -127,7 +165,7 @@ context:
   project_root: /Users/jane/new-api
 ```
 
-**Output:**
+**Output**:
 
 ```markdown
 // FILE: docs/architecture/decisions/0001-record-architecture-decisions.md
