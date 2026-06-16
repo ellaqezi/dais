@@ -1,0 +1,54 @@
+# Per-machine session state and runtime data
+sessions/
+tasks/
+todos/
+plans/
+debug/
+file-history/
+shell-snapshots/
+session-env/
+agent-comms/
+teams/
+telemetry/
+statsig/
+.last-cleanup
+
+# Per-session caches and logs
+cache/
+image-cache/
+paste-cache/
+backups/
+chrome/
+ide/
+history.jsonl
+stats-cache.json
+mcp-needs-auth-cache.json
+
+# Per-run security warning state
+security_warnings_state_*.json
+
+# Per-project memory (persisted per working directory)
+projects/
+
+# Local scratch scripts and commit-message buffer (see tool-usage.md, git-workflow.md)
+.claude/
+
+# Plugin install dir (managed by settings.json enabledPlugins)
+plugins/
+
+# Machine-local permission overrides
+settings.local.json
+
+# Personal config — commit .example files instead
+local-paths.md
+projects.md
+settings.json
+
+# Personal tooling integration docs (e.g. RTK / Rust Token Killer) — not portable to forks
+RTK.md
+
+# Editor / shell / settings backups — never tracked
+*.bak
+
+# macOS junk
+.DS_Store
