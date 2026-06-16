@@ -1,0 +1,166 @@
+# DAIS — DevEx Augmentation and Insight System
+# Master system manifest. All agent defaults and routing rules are declared here.
+# STABLE LAYER — do not modify to accommodate a new agent or topology.
+# Principle: A1. Flag [DESIGN CONFLICT — A1] if a new topology requires editing this file.
+# Principle: D1 — every default is declared here with a one-line rationale.
+
+system:
+  name: dais
+  version: "1.0.0"
+  description: >
+    Production-grade project harness for bootstrapping new software projects
+    and auditing existing ones. Enforces structural quality and FinOps discipline
+    via multi-agent orchestration.
+  modes:
+    - id: bootstrap
+      description: "Scaffold a new project with production-grade defaults"
+    - id: audit
+      description: "Analyse an existing project and produce a prioritised gap register"
+
+defaults:
+  compliance_regime: gdpr
+  compliance_regime_rationale: >
+    GDPR applies to any system that may process personal data. Defaulting to GDPR
+    avoids gaps when scope is unknown at session start. Override via session input if
+    a stricter regime applies (HIPAA, PCI-DSS), never to a weaker one.
+  complexity_router: data/complexity-router.md
+  metadata_footer_required: true
+  max_output_lines_default: 300
+  min_output_lines_default: 40
+
+# Token / cost tier assignments per agent.
+# dynamic_routing: true  → complexity router may adjust tier within ±1 based on task complexity
+# dynamic_routing: false → tier is fixed; no downgrade permitted (safety-critical agents)
+# forced_high: true      → displayed in Phase 2 manifest; user cannot exclude these agents
+agents:
+  derive-agent:
+    id: derive-agent
+    phase: 1
+    mode: both
+    tier: mid
+    dynamic_routing: true
+    max_lines: 200
+    min_lines: 40
+
+  manifest-agent:
+    id: manifest-agent
+    phase: 2
+    mode: both
+    tier: low
+    dynamic_routing: false
+    dynamic_routing_rationale: "Manifest generation is deterministic formatting; tier must not vary."
+    max_lines: 220
+    min_lines: 30
+
+  scaffold-agent:
+    id: scaffold-agent
+    phase: 3
+    mode: bootstrap
+    tier: mid
+    dynamic_routing: true
+    max_lines: 300
+    min_lines: 60
+
+  architecture-agent:
+    id: architecture-agent
+    phase: 3
+    mode: bootstrap
+    tier: high
+    dynamic_routing: true
+    max_lines: 400
+    min_lines: 80
+
+  ci-cd-agent:
+    id: ci-cd-agent
+    phase: 3
+    mode: bootstrap
+    tier: mid
+    dynamic_routing: true
+    max_lines: 250
+    min_lines: 60
+
+  security-agent:
+    id: security-agent
+    phase: 3
+    mode: bootstrap
+    tier: high
+    dynamic_routing: false
+    forced_high: true
+    dynamic_routing_rationale: >
+      Security misconfiguration is safety-critical. Downgrading risks incomplete
+      threat modelling or missed vulnerability patterns. No downgrade permitted.
+    max_lines: 300
+    min_lines: 80
+
+  observability-agent:
+    id: observability-agent
+    phase: 3
+    mode: bootstrap
+    tier: mid
+    dynamic_routing: true
+    max_lines: 250
+    min_lines: 60
+
+  testing-agent:
+    id: testing-agent
+    phase: 3
+    mode: bootstrap
+    tier: mid
+    dynamic_routing: true
+    max_lines: 250
+    min_lines: 60
+
+  docs-agent:
+    id: docs-agent
+    phase: 3
+    mode: bootstrap
+    tier: low
+    dynamic_routing: true
+    max_lines: 200
+    min_lines: 40
+
+  finops-agent:
+    id: finops-agent
+    phase: 3
+    mode: bootstrap
+    tier: mid
+    dynamic_routing: true
+    max_lines: 200
+    min_lines: 50
+
+  audit-agent:
+    id: audit-agent
+    phase: 3
+    mode: audit
+    tier: high
+    dynamic_routing: true
+    max_lines: 400
+    min_lines: 80
+
+  gap-agent:
+    id: gap-agent
+    phase: 3
+    mode: audit
+    tier: mid
+    dynamic_routing: true
+    max_lines: 300
+    min_lines: 60
+
+  remediation-agent:
+    id: remediation-agent
+    phase: 3
+    mode: audit
+    tier: mid
+    dynamic_routing: true
+    max_lines: 300
+    min_lines: 60
+
+  post-execution-reviewer:
+    id: post-execution-reviewer
+    phase: cross-cutting
+    mode: both
+    tier: mid
+    dynamic_routing: false
+    dynamic_routing_rationale: "Reviewer must operate at consistent capability; no variation."
+    max_lines: 180
+    min_lines: 20

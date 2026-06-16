@@ -1,0 +1,82 @@
+# DAIS DPIA Triggers
+# Defines conditions under which a GDPR Data Protection Impact Assessment is required.
+# Consulted by: security-agent, audit-agent, derive-agent
+# Principle C1, C3: DPIA requirement is data, not agent judgment.
+# Reference: GDPR Art. 35; WP29/EDPB Guidelines on DPIA (WP248 rev.01)
+
+version: "1.0"
+
+mandatory_dpia_triggers:
+  - id: T01
+    name: systematic_evaluation
+    description: "Systematic and extensive evaluation of personal aspects via automated processing, including profiling, that produces decisions with legal or similarly significant effects"
+    keywords: [scoring, profiling, prediction, automated_decision, ml_model, recommendation_engine, behavioural_analysis]
+    examples:
+      - "Credit scoring engine"
+      - "HR performance scoring"
+      - "Customer churn prediction model"
+
+  - id: T02
+    name: large_scale_special_category
+    description: "Processing special category data on a large scale (Art. 9 or 10)"
+    # Large scale threshold (WP248 guideline): >10,000 data subjects, or >1% sector population
+    threshold_subjects: 10000
+    keywords: [large_scale, bulk_processing, all_users, population, aggregated_health, aggregated_biometric]
+    defers_to: data/pii-classifier.yaml
+    category: special_category
+
+  - id: T03
+    name: systematic_monitoring
+    description: "Systematic monitoring of a publicly accessible area on a large scale"
+    keywords: [cctv, tracking, surveillance, location_tracking, beacon, user_monitoring, session_recording, keystroke_logging]
+
+  - id: T04
+    name: special_category_processing
+    description: "Processing of special category data per Art. 9 or criminal conviction data per Art. 10"
+    # Covered by pii-classifier.yaml special_category patterns — check that file first
+    defers_to: data/pii-classifier.yaml
+    category: special_category
+
+  - id: T05
+    name: vulnerable_individuals
+    description: "Processing personal data of vulnerable subjects at scale"
+    keywords: [children, minors, under_18, under18, juvenile, elderly, patients, mental_health, refugees, incapacitated]
+
+  - id: T06
+    name: innovative_technology
+    description: "Use of innovative or novel technology with insufficiently understood privacy implications"
+    keywords: [ai, artificial_intelligence, machine_learning, facial_recognition, iot, smart_device, blockchain, federated_learning]
+
+  - id: T07
+    name: automated_denial
+    description: "Automated processing used to make or inform decisions that deny service, access, contract, or opportunity"
+    keywords: [auto_reject, automated_denial, credit_scoring, fraud_detection, access_control_automated, auto_blacklist]
+
+  - id: T08
+    name: cross_border_transfer
+    description: "Transfer of personal data to third countries or international organisations without an adequacy decision"
+    keywords: [third_country_transfer, data_export, cross_border_transfer, international_transfer, schrems, standard_contractual_clauses]
+
+  - id: T09
+    name: data_matching_linking
+    description: "Matching or combining datasets from different purposes or controllers in ways data subjects would not reasonably expect"
+    keywords: [data_enrichment, dataset_merge, cross_reference, third_party_data, data_brokering, linkage_analysis]
+
+dpia_output_required:
+  - description_of_processing
+  - necessity_and_proportionality_assessment
+  - risk_assessment_to_rights_and_freedoms
+  - mitigation_measures
+  - dpo_consultation_record
+  - residual_risk_acceptance_sign_off
+
+action_on_trigger:
+  threshold: 2
+  threshold_note: "WP248: 2 or more criteria met → DPIA required. 1 criterion → DPIA recommended."
+  routing: security-agent
+  output_flag: "[GDPR: DPIA-REQUIRED — triggers: <list of trigger IDs>]"
+  halt_generation: true
+  halt_rationale: >
+    GDPR Art. 35(1) requires DPIA before processing begins. Generation of data processing
+    infrastructure halts until a DPIA artefact is confirmed by the responsible person.
+  resume_condition: "DPIA artefact path provided and confirmed by human in manifest."

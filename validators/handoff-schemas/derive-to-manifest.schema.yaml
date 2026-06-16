@@ -1,0 +1,80 @@
+# derive-to-manifest Handoff Schema
+# Defines the required fields that derive-agent must produce and manifest-agent must receive.
+# Principle B3: if a required field is missing, the handoff fails with a named gap — never silently.
+# Principle C3: all decisions about topology and compliance are resolved here before any agent executes.
+
+schema_version: "1.0"
+from_agent: derive-agent
+to_agent: manifest-agent
+
+required_fields:
+  - field: mode
+    type: enum
+    values: [bootstrap, audit]
+    description: "System mode derived from project state"
+    missing_action: HALT
+    gap_format: "[GAP-01] mode — required by: manifest-agent (cannot construct manifest without knowing mode)"
+
+  - field: project_root
+    type: string
+    description: "Absolute path to project root"
+    missing_action: HALT
+    gap_format: "[GAP-02] project_root — required by: manifest-agent (all file paths are relative to project root)"
+
+  - field: stack
+    type: object
+    description: "Detected stack: {runtime, framework, language, package_manager}"
+    missing_action: PARTIAL
+    gap_format: "[GAP-03] stack — required by: scaffold-agent, ci-cd-agent (stack drives template selection)"
+
+  - field: compliance_regime
+    type: string
+    default: gdpr
+    description: "Applicable compliance regime. Default: gdpr per system.config.yaml"
+    missing_action: USE_DEFAULT
+    gap_format: null
+    note: "Missing = use default. Default is documented in system.config.yaml."
+
+  - field: pii_detected
+    type: boolean
+    description: "Whether PII fields were detected in existing artefacts"
+    missing_action: PARTIAL
+    gap_format: "[GAP-04] pii_detected — required by: security-agent (determines gdpr-touched flag)"
+
+  - field: dpia_triggers
+    type: array
+    description: "List of matched dpia-trigger IDs from data/dpia-triggers.yaml"
+    missing_action: PARTIAL
+    gap_format: "[GAP-05] dpia_triggers — required by: security-agent"
+
+  - field: existing_artefacts
+    type: array
+    description: "List of detected files (ci, readme, dockerfile, test config, etc.)"
+    missing_action: PARTIAL
+    gap_format: "[GAP-06] existing_artefacts — required by: scaffold-agent (prevents overwriting existing files)"
+
+  - field: session_overrides
+    type: object
+    description: "Any user-provided overrides to system defaults (optional)"
+    missing_action: SKIP
+    note: "Absence is valid. Manifest treats this as 'no overrides'."
+
+optional_fields:
+  - field: detected_test_framework
+    description: "Detected test runner, if any"
+
+  - field: detected_ci_platform
+    description: "Detected CI platform (GitHub Actions, GitLab CI, etc.), if any"
+
+  - field: detected_iac_tool
+    description: "Detected IaC tooling (Terraform, CDK, Pulumi), if any"
+
+  - field: repo_size_loc
+    description: "Approximate lines of code in existing repo (audit mode)"
+
+validation_rules:
+  - rule: "mode must be present and valid before manifest-agent runs. Missing mode = HALT."
+  - rule: "project_root must be present and must be an absolute path."
+  - rule: "All HALT fields must be resolved before manifest-agent proceeds."
+  - rule: "PARTIAL fields produce named [GAP-n] entries in the manifest and agent notes."
+  - rule: "manifest-agent must surface all gaps to the human in Phase 2 for confirmation."

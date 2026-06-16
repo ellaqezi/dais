@@ -1,0 +1,63 @@
+# manifest-to-execute Handoff Schema
+# Defines the confirmed manifest fields the orchestrator uses to start Phase 3.
+# Principle D2: Phase 3 is irreversible. The manifest is the gate. All fields must be confirmed.
+
+schema_version: "1.0"
+from_agent: manifest-agent
+to_agent: orchestrator (Phase 3 execution)
+
+required_fields:
+  - field: confirmation
+    type: enum
+    values: [CONFIRMED]
+    description: "Human confirmation status. Only CONFIRMED triggers Phase 3."
+    missing_action: HALT
+    note: "ABORT, no response, or correction-in-progress = do not execute."
+
+  - field: mode
+    type: enum
+    values: [bootstrap, audit]
+    missing_action: HALT
+
+  - field: project_root
+    type: string
+    missing_action: HALT
+
+  - field: agent_execution_plan
+    type: array
+    description: "Ordered list of agents with: id, tier, routing_mode, forced_high, phase"
+    missing_action: HALT
+
+  - field: file_generation_plan
+    type: array
+    description: "Ordered list of files to generate with: path, purpose, producing_agent"
+    missing_action: HALT
+
+  - field: compliance_baseline
+    type: string
+    description: "Name of applied compliance baseline (e.g. 'gdpr')"
+    missing_action: HALT
+
+  - field: forced_high_agents
+    type: array
+    description: "Explicitly listed forced-HIGH agents — surfaced in manifest for human visibility"
+    missing_action: USE_DEFAULT
+    default: []
+
+  - field: confirmed_gaps
+    type: array
+    description: "Gaps from Phase 1 that the human acknowledged and accepted before proceeding"
+    missing_action: USE_DEFAULT
+    default: []
+
+  - field: excluded_agents
+    type: array
+    description: "Agents excluded by human via EXCLUDE: command in manifest"
+    missing_action: USE_DEFAULT
+    default: []
+
+validation_rules:
+  - rule: "confirmation must equal 'CONFIRMED'. Any other value prevents Phase 3."
+  - rule: "agent_execution_plan and file_generation_plan must both be present and non-empty."
+  - rule: "Every forced_high agent in system.config.yaml must appear in forced_high_agents — cannot be excluded."
+  - rule: "Excluded agents must not include forced_high agents. Attempted exclusion of forced_high agent is rejected."
