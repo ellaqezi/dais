@@ -1,0 +1,98 @@
+# DAIS Severity Rubric
+# Defines severity levels for findings produced in audit mode.
+# Consulted by: audit-agent, gap-agent
+# Principle C1, C3: severity is data, not agent judgment.
+# Principle D5: severity assignment must be machine-derivable from criteria below.
+
+version: "1.0"
+
+levels:
+  CRITICAL:
+    numeric: 4
+    label: CRITICAL
+    description: >
+      Immediate production risk, active security vulnerability, or confirmed GDPR violation.
+      Must be resolved before the project goes live. Blocks release.
+    slo_impact: platform-wide
+    routing: security-agent
+    blocks_release: true
+    recommended_resolution_days: 0
+    examples:
+      - "Secrets or credentials hardcoded in source code or committed to version control"
+      - "Authentication bypass (no auth check on protected route)"
+      - "SQL injection vector (unparameterised query with user input)"
+      - "GDPR: PII stored without lawful basis or explicit data inventory"
+      - "GDPR: Special category data processed without explicit consent mechanism"
+      - "Dependency with known critical CVE in direct dependency (CVSS ≥ 9.0)"
+      - "No secrets management — all secrets in environment variables with no rotation"
+      - "GDPR dark pattern: pre-ticked consent checkbox (DP02)"
+
+  HIGH:
+    numeric: 3
+    label: HIGH
+    description: >
+      Significant risk to reliability, security, or compliance. Does not block release
+      but must be resolved in the current sprint. Escalates to CRITICAL if unresolved.
+    slo_impact: multi-team
+    routing: security-agent or architecture-agent
+    blocks_release: false
+    recommended_resolution_days: 5
+    examples:
+      - "No structured logging — incidents cannot be investigated"
+      - "No health check endpoints — deployments cannot be validated"
+      - "No test coverage threshold defined or enforced"
+      - "Sensitive data (tokens, hashes) present in application logs"
+      - "DPIA triggers present but no DPIA artefact"
+      - "GDPR: No data retention policy documented"
+      - "No dependency vulnerability scanning in CI pipeline"
+      - "Missing HTTPS enforcement / HSTS header"
+      - "GDPR dark pattern: consent withdrawal harder than consent giving (DP03)"
+
+  MEDIUM:
+    numeric: 2
+    label: MEDIUM
+    description: >
+      Degraded operational quality or best-practice gap with measurable risk.
+      Should be resolved in the next sprint.
+    slo_impact: single-team
+    routing: architecture-agent or docs-agent
+    blocks_release: false
+    recommended_resolution_days: 14
+    examples:
+      - "No CHANGELOG or version strategy"
+      - "No API versioning strategy (breaking changes undiscoverable)"
+      - "No error budget or SLO definition"
+      - "README missing setup, test, or deploy sections"
+      - "No rate limiting on public API endpoints"
+      - "No correlation IDs in log output"
+      - "IaC exists but no drift detection or state locking"
+      - "No data flow diagram for GDPR article 30 record"
+
+  LOW:
+    numeric: 1
+    label: LOW
+    description: >
+      Best-practice deviation with low immediate risk. Address in backlog.
+    slo_impact: none
+    routing: docs-agent
+    blocks_release: false
+    recommended_resolution_days: 30
+    examples:
+      - "No CONTRIBUTING guide"
+      - "No Architectural Decision Records (ADRs)"
+      - "Missing inline documentation on public interfaces"
+      - "No performance baseline documented"
+      - "Inconsistent error message format across endpoints"
+      - "No local development environment setup script"
+
+assignment_rules:
+  - rule: "When in doubt between two levels, assign the higher."
+  - rule: "A finding that combines with another finding to create a CRITICAL scenario is rated HIGH minimum."
+  - rule: "Severity is assessed on worst-case impact, not typical-case."
+  - rule: "All security findings are rated HIGH minimum. No security finding may be rated MEDIUM or LOW."
+  - rule: "GDPR findings involving special category data (Art. 9) are rated CRITICAL, no exceptions."
+  - rule: "Findings with a known active exploit or CVE ≥ 9.0 are CRITICAL regardless of category."
+
+evidence_requirement:
+  rule: "Every finding must include a quoted line, file:line reference, or absent-file citation as evidence."
+  rationale: "Findings without evidence cannot be verified or reproduced and are rejected by the post-execution reviewer."

@@ -1,0 +1,104 @@
+# DAIS Dark Patterns Reference
+# Defines UI/UX and data dark patterns to check for in scaffolded and audited projects.
+# Consulted by: scaffold-agent (bootstrap), audit-agent (audit)
+# Principle C1: compliance enforced at entry — checked during scaffold, not after.
+# Reference: EU Dark Patterns Guidelines (EDPB 2022, EC 2023)
+
+version: "1.0"
+
+categories:
+  consent_patterns:
+    description: "Dark patterns in consent collection flows"
+    patterns:
+      - id: DP01
+        name: cookie_consent_misdirection
+        description: "Accept/Agree button is more visually prominent than Reject/Decline option"
+        check: "Accept and Reject/Decline must render at equal visual prominence (same size, colour weight, position)"
+        severity: HIGH
+        gdpr_article: "Art. 7 — freely given consent requires no undue influence"
+        audit_check: "Inspect consent banner component. Compare CTA button styles."
+
+      - id: DP02
+        name: pre_ticked_consent_boxes
+        description: "Consent checkboxes default to checked (opt-in by default)"
+        check: "All consent checkboxes must initialise to unchecked (false)"
+        severity: CRITICAL
+        gdpr_article: "Art. 7(2) — silence or pre-ticked boxes do not constitute consent"
+        audit_check: "Search for checkbox initialisation with checked=true or defaultChecked=true"
+
+      - id: DP03
+        name: consent_withdrawal_friction
+        description: "Withdrawing consent requires more steps or effort than giving it"
+        check: "Consent withdrawal must be reachable in ≤ 2 clicks from any page"
+        severity: HIGH
+        gdpr_article: "Art. 7(3) — withdrawal must be as easy as giving consent"
+        audit_check: "Count navigation steps to reach consent management from homepage"
+
+      - id: DP04
+        name: bundled_consent
+        description: "Single consent covers multiple distinct processing purposes"
+        check: "Each distinct processing purpose must have a separate, independent consent toggle"
+        severity: HIGH
+        gdpr_article: "Art. 7(2) — bundled consent is not freely given"
+
+  interface_design:
+    description: "Dark patterns in UI design that manipulate user choices"
+    patterns:
+      - id: DP05
+        name: confirm_shaming
+        description: "Reject/decline option uses guilt-inducing or negative language"
+        check: "Reject option text must be neutral (e.g., 'No thanks' — not 'No, I hate saving money')"
+        severity: MEDIUM
+        audit_check: "Review copy for reject/cancel/decline buttons in consent and marketing flows"
+
+      - id: DP06
+        name: hidden_subscription
+        description: "Free trial auto-converts to paid subscription without salient pre-conversion notice"
+        check: >
+          All trial-to-paid transitions require: (1) email notice ≥ 7 days before conversion,
+          (2) explicit confirmation step, (3) easy cancellation path
+        severity: HIGH
+
+      - id: DP07
+        name: roach_motel
+        description: "Signing up is easy but cancelling or deleting account is difficult"
+        check: "Account deletion must be reachable in ≤ 3 steps from account settings"
+        severity: HIGH
+        gdpr_article: "Art. 17 — right to erasure must be exercisable without undue friction"
+
+  data_minimisation:
+    description: "Dark patterns that collect or use data beyond stated purpose"
+    patterns:
+      - id: DP08
+        name: excessive_permissions_default
+        description: "Default OAuth/API permission scope is broader than the minimum required for the feature"
+        check: "All OAuth/API scopes must default to minimum required. Broader scopes require explicit user grant."
+        severity: HIGH
+        gdpr_article: "Art. 5(1)(c) — data minimisation principle"
+        audit_check: "Review OAuth scopes in auth config. Check for scopes not required by core feature."
+
+      - id: DP09
+        name: purpose_creep
+        description: "Data collected for purpose A is subsequently used for purpose B without new consent"
+        check: "Each data collection point must declare its purpose in a comment. Cross-purpose use requires new consent event."
+        severity: CRITICAL
+        gdpr_article: "Art. 5(1)(b) — purpose limitation principle"
+        audit_check: "Trace data flow from collection to all consumption points. Flag any unlabelled purpose."
+
+      - id: DP10
+        name: invisible_tracking
+        description: "User activity tracked without disclosure (analytics, session recording, fingerprinting)"
+        check: "All tracking must be disclosed in privacy notice and covered by appropriate consent"
+        severity: HIGH
+        audit_check: "Search for analytics SDK initialisation without consent gate"
+
+actions_on_match:
+  CRITICAL: >
+    Block generation. Emit [DARK-PATTERN: <id> — <name>]. Route to security-agent.
+    Add to gap register as CRITICAL.
+  HIGH: >
+    Emit [DARK-PATTERN: <id> — <name>]. Add to gap register as HIGH.
+    Continue generation with warning.
+  MEDIUM: >
+    Emit [DARK-PATTERN: <id> — <name>]. Add to gap register as MEDIUM.
+    Continue generation.

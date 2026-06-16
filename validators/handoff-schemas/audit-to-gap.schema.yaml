@@ -1,0 +1,42 @@
+# audit-to-gap Handoff Schema
+# Defines the findings that audit-agent must produce and gap-agent must receive.
+# Principle B3: structured handoff prevents silent partial analysis.
+
+schema_version: "1.0"
+from_agent: audit-agent
+to_agent: gap-agent
+
+required_fields:
+  - field: findings
+    type: array
+    description: >
+      List of findings, each with: id, title, severity (CRITICAL|HIGH|MEDIUM|LOW),
+      evidence (quoted text or file:line), gdpr_relevant (bool), trigger_ids (list)
+    missing_action: HALT
+    gap_format: "[GAP-01] findings — required by: gap-agent (cannot produce gap register without audit findings)"
+
+  - field: artefacts_analysed
+    type: array
+    description: "List of files/directories reviewed by audit-agent"
+    missing_action: PARTIAL
+    gap_format: "[GAP-02] artefacts_analysed — required by: gap-agent (coverage unknown)"
+
+  - field: compliance_regime
+    type: string
+    missing_action: USE_DEFAULT
+    default: gdpr
+
+  - field: gdpr_touched
+    type: boolean
+    missing_action: PARTIAL
+    gap_format: "[GAP-03] gdpr_touched — required by: gap-agent (GDPR flag propagation)"
+
+  - field: dpia_required
+    type: boolean
+    missing_action: PARTIAL
+    gap_format: "[GAP-04] dpia_required — required by: gap-agent (escalation trigger)"
+
+validation_rules:
+  - rule: "findings must be a non-empty array. Empty findings array = PARTIAL (not HALT) — surface as explicit note."
+  - rule: "Each finding must include: id, title, severity (from data/severity-rubric.yaml), evidence."
+  - rule: "gap-agent must not add or re-classify findings. It organises and prioritises; it does not judge severity."

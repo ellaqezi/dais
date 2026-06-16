@@ -1,0 +1,65 @@
+# DAIS — Scope Manifests
+# Declares which agents run in which mode and their execution order.
+# VARIABLE LAYER — may be modified to add a new scope/mode.
+# Adding a new mode: add a new entry here. Do NOT modify system.config.yaml. (A5)
+
+scopes:
+  bootstrap:
+    description: "New project scaffolding — produces a production-grade project skeleton"
+    phase_order:
+      - phase: 1
+        agents: [derive-agent]
+        execution: sequential
+        description: "Derive project topology from existing artefacts or empty dir detection"
+
+      - phase: 2
+        agents: [manifest-agent]
+        execution: sequential
+        description: "Present manifest to human; gate on CONFIRM before proceeding"
+        gate: human_confirmation_required
+
+      - phase: 3
+        agents:
+          - scaffold-agent
+          - architecture-agent
+          - ci-cd-agent
+          - security-agent
+          - observability-agent
+          - testing-agent
+          - docs-agent
+          - finops-agent
+        execution: parallel
+        forced_sequential:
+          - agent: security-agent
+            after: scaffold-agent
+            reason: "Security baseline must run after scaffold produces the file structure it secures"
+        description: "Generate all project artefacts in parallel; security-agent after scaffold"
+
+  audit:
+    description: "Existing project analysis — produces a prioritised gap register and remediation plan"
+    phase_order:
+      - phase: 1
+        agents: [derive-agent]
+        execution: sequential
+        description: "Derive project topology and detect compliance triggers from existing codebase"
+
+      - phase: 2
+        agents: [manifest-agent]
+        execution: sequential
+        description: "Present audit plan to human; gate on CONFIRM before proceeding"
+        gate: human_confirmation_required
+
+      - phase: 3
+        agents:
+          - audit-agent
+          - gap-agent
+          - remediation-agent
+        execution: sequential
+        description: >
+          Sequential: audit-agent produces findings → gap-agent produces gap register
+          → remediation-agent produces remediation plan. Each step depends on the previous.
+
+handoff_schemas:
+  derive-to-manifest: validators/handoff-schemas/derive-to-manifest.schema.yaml
+  manifest-to-execute: validators/handoff-schemas/manifest-to-execute.schema.yaml
+  audit-to-gap: validators/handoff-schemas/audit-to-gap.schema.yaml

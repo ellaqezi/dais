@@ -1,0 +1,132 @@
+# DAIS Trigger Keywords
+# Maps input keyword matches to forced routing actions.
+# Consulted by: orchestrator before every agent invocation.
+# Principle C2: forced routing is structural and declared here — the orchestrator matches, not interprets.
+
+version: "1.0"
+
+forced_routes:
+  - trigger: security
+    description: "Security-relevant keywords requiring security-agent review"
+    keywords:
+      - vulnerability
+      - cve
+      - exploit
+      - injection
+      - xss
+      - csrf
+      - auth bypass
+      - privilege escalation
+      - secrets
+      - credentials
+      - hardcoded password
+      - api key
+      - token leak
+      - insecure dependency
+      - owasp
+    route_to: security-agent
+    tier: high
+    override_dynamic_routing: true
+    rationale: "Security findings must be handled at HIGH tier with security specialist. No exceptions."
+
+  - trigger: gdpr_pii
+    description: "GDPR and PII-related keywords requiring security-agent review"
+    keywords:
+      - personal data
+      - pii
+      - gdpr
+      - data subject
+      - right to erasure
+      - right to access
+      - data portability
+      - data breach
+      - dpa
+      - supervisory authority
+      - consent
+      - lawful basis
+      - data retention
+      - dpia
+      - privacy by design
+    route_to: security-agent
+    tier: high
+    override_dynamic_routing: true
+    consult:
+      - data/pii-classifier.yaml
+      - data/dpia-triggers.yaml
+
+  - trigger: architecture
+    description: "Architecture and system-design keywords best handled at HIGH tier"
+    keywords:
+      - architecture
+      - adr
+      - architectural decision record
+      - system design
+      - bounded context
+      - event sourcing
+      - cqrs
+      - coupling
+      - cohesion
+      - dependency inversion
+      - hexagonal architecture
+      - strangler fig
+    route_to: architecture-agent
+    tier: high
+    override_dynamic_routing: false
+    note: "Complexity router may still adjust tier. override_dynamic_routing: false means suggestion only."
+
+  - trigger: finops
+    description: "FinOps and cost-management keywords routed to finops-agent"
+    keywords:
+      - token budget
+      - model cost
+      - tier assignment
+      - cost routing
+      - inference cost
+      - rate limit
+      - token limit
+      - model selection
+      - cost optimisation
+      - llm spend
+    route_to: finops-agent
+    tier: mid
+    override_dynamic_routing: false
+
+  - trigger: compliance_regime
+    description: "Non-GDPR compliance regime keywords — escalate to security-agent for regime assessment"
+    keywords:
+      - hipaa
+      - pci-dss
+      - pci dss
+      - sox
+      - iso 27001
+      - nist
+      - cis benchmark
+      - soc 2
+      - fedramp
+    route_to: security-agent
+    tier: high
+    override_dynamic_routing: true
+    note: "Compliance regime assessment is safety-critical; always route to security-agent at HIGH."
+
+out_of_scope:
+  description: "Keywords that indicate a request outside DAIS scope. Refuse and redirect."
+  patterns:
+    - keywords: [financial advice, investment advice, tax advice]
+      response: >
+        [OUT-OF-SCOPE] DAIS designs software systems. It does not provide financial or investment advice.
+        Redirect to a qualified financial professional.
+
+    - keywords: [medical advice, clinical recommendation, diagnosis]
+      response: >
+        [OUT-OF-SCOPE] DAIS designs software systems. It does not provide medical advice.
+        Redirect to a qualified medical professional.
+
+    - keywords: [legal advice, legal opinion, should I sue]
+      response: >
+        [OUT-OF-SCOPE] DAIS designs software systems. It does not provide legal advice.
+        Redirect to a qualified legal professional.
+
+    - keywords: [generate malware, exploit code, bypass authentication, crack password]
+      response: >
+        [OUT-OF-SCOPE] This request describes an offensive security attack. DAIS will not assist.
+        Redirect to an authorised penetration testing engagement with written authorisation.
