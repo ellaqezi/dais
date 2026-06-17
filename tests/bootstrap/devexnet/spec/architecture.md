@@ -1,0 +1,43 @@
+# Spec: Architecture
+
+## Goal
+
+Establish the architectural boundaries and design decisions for devexnet so future
+feature work stays coherent with the bootstrap intent.
+
+## Behavior
+
+devexnet follows a layered CLI architecture:
+
+```
+CLI layer      (src/main.py — Click commands: bootstrap, audit, validate, status)
+    |
+Domain layer   (src/pipeline.py, src/validators.py, src/tasks.py)
+    |
+I/O layer      (src/io.py — all file reads/writes isolated here)
+```
+
+No business logic in the CLI layer. No I/O in the domain layer. Side effects are
+contained at the boundaries.
+
+## Key Decisions
+
+See detailed decision records in `docs/architecture/`:
+
+| ADR | Decision |
+|-----|---------|
+| [ADR-0001](../docs/architecture/ADR-0001-stack-choices.md) | Python CLI with Click; PyYAML for config; pytest for testing |
+| [ADR-0003](../docs/architecture/ADR-0003-git-worktree-strategy.md) | Worktree-per-issue branch strategy |
+
+## Constraints
+
+- Domain layer must not import Click (no coupling to CLI framework in business logic)
+- I/O layer provides path-based interfaces; domain layer works with in-memory objects
+- All external tool invocations (pre-commit, shellcheck, validate_loomreed_light.sh)
+  go through a single `src/runner.py` module that captures output and exit codes
+
+## Acceptance Criteria
+
+- Domain layer has zero imports from `click`
+- I/O layer is the only module that opens files
+- `src/runner.py` is the only module that calls `subprocess`
