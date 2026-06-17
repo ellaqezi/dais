@@ -75,6 +75,32 @@ Everything here is opinion, not gospel. The rules in `CLAUDE.md` and its referen
 
 The topic-file layout (root `CLAUDE.md` pointing at focused sub-docs) keeps each file small enough to read in full during a session. If a file grows past ~300 lines, consider splitting it further.
 
+## Agents submodule
+
+`agents/` is a Git submodule pointing to [`github.com/cristim/agents`](https://github.com/cristim/agents) — a curated library of guidance files for Claude Code workflows.
+
+**Purpose**: The `agents/` directory is symlinked into `~/.codex` and `~/.gemini` during setup (`scripts/setup-agent-symlinks.sh`) so that the guidance is available to Codex CLI and Gemini CLI instances across your machine.
+
+**Current pin**: The submodule is **not pinned to a specific commit SHA** — it branch-tracks upstream `main`, pulling the latest version on `git submodule update`. This provides access to the latest guidance but introduces a supply-chain dependency: upstream changes pull automatically.
+
+**Updating**: To pull the latest agents/ guidance:
+```bash
+git submodule update --remote
+git add agents
+git commit -m "chore: update agents/ submodule to latest"
+```
+
+**Pinning for supply-chain security**: To lock the submodule to a specific commit (recommended for production):
+```bash
+cd agents
+git checkout <commit-sha>
+cd ..
+git add agents .gitmodules
+git commit -m "chore: pin agents/ submodule to <commit-sha>"
+```
+
+Then document the pin reason in this README.
+
 ## Contributing
 
 This is primarily a personal config. PRs that fix clear bugs, typos, or outdated advice are welcome. Feature additions that make sense only for a specific workflow are better kept in a fork.

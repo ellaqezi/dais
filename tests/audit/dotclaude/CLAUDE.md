@@ -24,7 +24,7 @@ Detailed guidance lives in dedicated files. **Always read** the ones marked as s
 
 | File | When to read |
 |------|-------------|
-| `~/.claude/projects.md` | **Always** — at the start of every session |
+| `~/.claude/projects.md` | **Recommended** — at the start of every session (optional; created from `projects.md.example` if you have a curated project index) |
 | `~/.claude/coding-standards.md` | **Always** — when writing/reviewing code, and on first visit to any project (bootstrap checklist) |
 | `~/.claude/conventions.md` | When working with Go, TypeScript, Python, Terraform, Docker, or databases |
 | `~/.claude/infra-ops.md` | When working on infrastructure, deployments, cloud resources, or ops |
@@ -35,6 +35,8 @@ Detailed guidance lives in dedicated files. **Always read** the ones marked as s
 | `~/.claude/git-workflow.md` | **Always** — before staging a commit, writing a commit message, opening a PR, or after `git push` (CI watcher rules) |
 | `~/.claude/worktrees.md` | When starting any non-trivial change (§1b) |
 | `~/.claude/triage.md` | When triaging/prioritizing, before sprint planning, after a major merge, or when starting in an unfamiliar repo with an overwhelming open count (§7) |
+
+**Note on optional config files**: `projects.md`, `local-paths.md`, and `settings.json` are created from example templates (`.example` suffix) during setup and are gitignored. If you cloned this repo without running the setup step 3, these files won't exist — that's fine. The guidance will still work; you'll simply skip the project-index step and inline local tool paths as needed.
 
 ## Projects
 
