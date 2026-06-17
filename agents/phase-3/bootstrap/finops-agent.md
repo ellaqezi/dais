@@ -23,6 +23,10 @@ Generate FinOps guardrails and cost governance artefacts for the new project —
 configuration, cloud cost tagging standards, budget alert stubs, and a session cost summary.
 Ensure that token consumption strategy and cloud cost discipline are embedded from day one.
 
+**Post-Acceptance Cost Report**: This agent produces the Session FinOps Summary ONLY after the
+post-execution-reviewer issues an **ACCEPT** verdict on all generated artefacts. Cost reporting
+is gated on acceptance to ensure accurate routing-decision accounting and compliance attestation.
+
 ---
 
 ## Community
