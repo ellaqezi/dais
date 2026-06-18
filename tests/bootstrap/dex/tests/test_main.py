@@ -50,6 +50,7 @@ class TestBootstrap:
             result = runner.invoke(cli, ["bootstrap"])
             assert result.exit_code == 0
             assert "[dex] bootstrap:" in result.output
+            assert "task-003" in result.output
 
     def test_explicit_target(self, runner):
         with runner.isolated_filesystem():
@@ -77,6 +78,7 @@ class TestAudit:
             result = runner.invoke(cli, ["audit"])
             assert result.exit_code == 0
             assert "[dex] audit:" in result.output
+            assert "task-004" in result.output
 
     def test_explicit_target(self, runner):
         with runner.isolated_filesystem():
@@ -103,6 +105,8 @@ class TestValidate:
             result = runner.invoke(cli, ["validate"])
             assert result.exit_code == 0
             assert "[dex] validate:" in result.output
+            assert "task-002" in result.output
+            assert "make validate" in result.output
 
     def test_explicit_target(self, runner):
         with runner.isolated_filesystem():
@@ -128,3 +132,4 @@ class TestStatus:
         result = runner.invoke(cli, ["status"])
         assert result.exit_code == 0
         assert "[dex] status" in result.output
+        assert "task-list.md" in result.output
