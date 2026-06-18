@@ -27,7 +27,10 @@ See detailed decision records in `docs/architecture/`:
 | ADR | Decision |
 |-----|---------|
 | [ADR-0001](../docs/architecture/ADR-0001-stack-choices.md) | Python CLI with Click; PyYAML for config; pytest for testing |
+| [ADR-0002](../docs/architecture/ADR-0002-layered-architecture.md) | Three-layer architecture: CLI → domain → I/O with strict import boundaries |
 | [ADR-0003](../docs/architecture/ADR-0003-git-worktree-strategy.md) | Worktree-per-issue branch strategy |
+| [ADR-0004](../docs/architecture/ADR-0004-package-name-matches-project.md) | Package directory named `dex/` not `src/` — prevents ModuleNotFoundError from any cwd |
+| [ADR-0005](../docs/architecture/ADR-0005-stub-output-convention.md) | Stub output: task link + interim command; `--verbose` reserved for real implementation |
 
 ## Constraints
 
