@@ -1,7 +1,8 @@
 .DEFAULT_GOAL := help
 
-PYTHON := .venv/bin/python
-PIP    := .venv/bin/pip
+PYTHON     := .venv/bin/python
+PIP        := .venv/bin/pip
+PRECOMMIT  := .venv/bin/pre-commit
 
 .PHONY: help install validate test lint clean
 
@@ -17,10 +18,10 @@ install:
 	python3 -m venv .venv
 	$(PIP) install --upgrade pip
 	$(PIP) install -e ".[dev]"
-	pre-commit install
+	$(PRECOMMIT) install
 
 validate:
-	pre-commit run --all-files
+	$(PRECOMMIT) run --all-files
 	bash scripts/validate_loomreed_light.sh
 	shellcheck scripts/*.sh
 
