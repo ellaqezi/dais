@@ -17,4 +17,4 @@ repos:
     rev: v1.4.0
     hooks:
       - id: detect-secrets
-        args: [--baseline, tests/bootstrap/devexnet/.secrets.baseline]
+        args: [--baseline, tests/bootstrap/dex/.secrets.baseline]

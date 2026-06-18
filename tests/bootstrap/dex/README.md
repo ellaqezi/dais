@@ -1,4 +1,4 @@
-# devexnet
+# DevEX
 
 A Python CLI harness (`dex`) that unifies three developer-experience tools — DAIS, dotclaude, and
 loom-reed-light — into a single, coherent project structure.
