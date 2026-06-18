@@ -10,32 +10,60 @@ providing a single entry point for bootstrapping, auditing, validating, and stat
 
 ## Behavior
 
-### Bootstrap (`dex bootstrap <target-dir>`)
+### Bootstrap (`dex bootstrap [target-dir ...]`)
 
-- Runs the DAIS three-phase pipeline on `<target-dir>`:
+- Accepts one or more target directories; defaults to `.` when none given
+- **Fail-fast**: stops on the first directory that fails (manifest CONFIRM is interactive;
+  batching past a rejection is unsafe)
+- Runs the DAIS three-phase pipeline on each `<target-dir>`:
   1. derive-agent: scans for topology, stack, PII, DPIA triggers
   2. manifest-agent: presents plan, waits for CONFIRM
   3. execute phase: runs all relevant bootstrap agents in order
 - Creates loom-reed-light spec/ and tasks/ structure as a post-bootstrap step
 - Writes CLAUDE.md at project root pointing to dotclaude guides
 
-### Audit (`dex audit <target-dir>`)
+### Audit (`dex audit [target-dir ...]`)
 
+- Accepts one or more target directories; defaults to `.` when none given
+- **Run-all**: continues across all directories; prints a per-directory summary and
+  exits non-zero if any directory failed
 - Runs DAIS audit pipeline: audit-agent -> gap-agent -> remediation-agent
-- Outputs gap register to stdout and writes `gap-register.md` at target root
+- Outputs gap register to stdout and writes `gap-register.md` at each target root
 - Does not modify target project without explicit `--apply` flag
 
-### Validate (`dex validate [target-dir]`)
+### Validate (`dex validate [target-dir ...]`)
 
-- Runs all three validators in order:
+- Accepts one or more target directories; defaults to `.` when none given
+- **Run-all**: continues across all directories; prints a per-directory summary and
+  exits non-zero if any directory failed
+- Runs all three validators in order for each target:
   1. pre-commit hooks
   2. LOOM schema validator (task sections, status, sizing)
   3. shellcheck on scripts/
-- Exits non-zero on any failure; each failure is independently labelled
+- Each failure is independently labelled with its directory and validator layer
 
-### Status (`dex status`)
+### Status (`dex status [target-dir ...]`)
 
-- Reads `tasks/task-list.md` and prints summary: counts by status, next ready task
+- Accepts one or more target directories; defaults to `.` when none given
+- **Run-all**: reads `tasks/task-list.md` in each target and prints a per-directory
+  summary; exits 0 even if a target has no task list (prints a "no task list" notice)
+
+## Multi-Target Output Format
+
+When multiple directories are given, each directory's output is framed with a header
+and a per-directory result line. A summary line closes the command:
+
+```
+[dex] audit: path/to/dir-a
+  ...
+
+[dex] audit: path/to/dir-b
+  ...
+
+Summary: 2 target(s) — N passed, M failed
+```
+
+Exit code is 0 only if all targets passed.
 
 ## Constraints
 

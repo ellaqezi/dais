@@ -1,5 +1,7 @@
 """Tests for dex CLI entry point (dex/main.py)."""
 
+import os
+
 import pytest
 from click.testing import CliRunner
 
@@ -36,7 +38,7 @@ class TestCliGroup:
 
 
 # ---------------------------------------------------------------------------
-# bootstrap
+# bootstrap  (fail-fast: stops on first failing dir)
 # ---------------------------------------------------------------------------
 
 class TestBootstrap:
@@ -49,18 +51,32 @@ class TestBootstrap:
         result = runner.invoke(cli, ["bootstrap", "/no/such/directory"])
         assert result.exit_code != 0
 
-    def test_stub_output(self, runner):
+    def test_default_cwd(self, runner):
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["bootstrap"])
             assert result.exit_code == 0
             assert "[dex] bootstrap:" in result.output
             assert "./tasks/task-003.md" in result.output
 
-    def test_explicit_target(self, runner):
+    def test_explicit_single_target(self, runner):
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["bootstrap", "."])
             assert result.exit_code == 0
-            assert "[dex] bootstrap:" in result.output
+            assert "[dex] bootstrap: ." in result.output
+
+    def test_multi_target_fail_fast(self, runner):
+        with runner.isolated_filesystem():
+            os.makedirs("a")
+            os.makedirs("b")
+            result = runner.invoke(cli, ["bootstrap", "a", "b"])
+            assert result.exit_code != 0
+            assert "[dex] bootstrap: a" in result.output
+            assert "[dex] bootstrap: b" not in result.output
+
+    def test_no_summary_line(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["bootstrap"])
+            assert "Summary:" not in result.output
 
     def test_unknown_flag_exits_nonzero(self, runner):
         with runner.isolated_filesystem():
@@ -69,7 +85,7 @@ class TestBootstrap:
 
 
 # ---------------------------------------------------------------------------
-# audit
+# audit  (run-all: visits every dir, exits non-zero if any failed)
 # ---------------------------------------------------------------------------
 
 class TestAudit:
@@ -81,18 +97,40 @@ class TestAudit:
         result = runner.invoke(cli, ["audit", "/no/such/directory"])
         assert result.exit_code != 0
 
-    def test_stub_output(self, runner):
+    def test_default_cwd(self, runner):
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["audit"])
-            assert result.exit_code == 0
+            assert result.exit_code != 0
             assert "[dex] audit:" in result.output
             assert "./tasks/task-004.md" in result.output
 
-    def test_explicit_target(self, runner):
+    def test_explicit_single_target(self, runner):
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["audit", "."])
-            assert result.exit_code == 0
-            assert "[dex] audit:" in result.output
+            assert result.exit_code != 0
+            assert "[dex] audit: ." in result.output
+
+    def test_multi_target_runs_all(self, runner):
+        with runner.isolated_filesystem():
+            os.makedirs("a")
+            os.makedirs("b")
+            result = runner.invoke(cli, ["audit", "a", "b"])
+            assert "[dex] audit: a" in result.output
+            assert "[dex] audit: b" in result.output
+            assert "Summary: 2 target(s)" in result.output
+
+    def test_multi_target_summary_format(self, runner):
+        with runner.isolated_filesystem():
+            os.makedirs("x")
+            os.makedirs("y")
+            result = runner.invoke(cli, ["audit", "x", "y"])
+            assert "passed" in result.output
+            assert "failed" in result.output
+
+    def test_no_summary_for_single_target(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["audit", "."])
+            assert "Summary:" not in result.output
 
     def test_unknown_flag_exits_nonzero(self, runner):
         with runner.isolated_filesystem():
@@ -101,7 +139,7 @@ class TestAudit:
 
 
 # ---------------------------------------------------------------------------
-# validate
+# validate  (run-all: visits every dir, exits non-zero if any failed)
 # ---------------------------------------------------------------------------
 
 class TestValidate:
@@ -113,19 +151,33 @@ class TestValidate:
         result = runner.invoke(cli, ["validate", "/no/such/directory"])
         assert result.exit_code != 0
 
-    def test_stub_output(self, runner):
+    def test_default_cwd(self, runner):
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["validate"])
-            assert result.exit_code == 0
+            assert result.exit_code != 0
             assert "[dex] validate:" in result.output
             assert "./tasks/task-002.md" in result.output
             assert "make validate" in result.output
 
-    def test_explicit_target(self, runner):
+    def test_explicit_single_target(self, runner):
         with runner.isolated_filesystem():
             result = runner.invoke(cli, ["validate", "."])
-            assert result.exit_code == 0
-            assert "[dex] validate:" in result.output
+            assert result.exit_code != 0
+            assert "[dex] validate: ." in result.output
+
+    def test_multi_target_runs_all(self, runner):
+        with runner.isolated_filesystem():
+            os.makedirs("a")
+            os.makedirs("b")
+            result = runner.invoke(cli, ["validate", "a", "b"])
+            assert "[dex] validate: a" in result.output
+            assert "[dex] validate: b" in result.output
+            assert "Summary: 2 target(s)" in result.output
+
+    def test_no_summary_for_single_target(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["validate", "."])
+            assert "Summary:" not in result.output
 
     def test_unknown_flag_exits_nonzero(self, runner):
         with runner.isolated_filesystem():
@@ -134,7 +186,7 @@ class TestValidate:
 
 
 # ---------------------------------------------------------------------------
-# status
+# status  (run-all, always exit 0 — read-only)
 # ---------------------------------------------------------------------------
 
 class TestStatus:
@@ -142,13 +194,36 @@ class TestStatus:
         result = runner.invoke(cli, ["status", "--help"])
         assert result.exit_code == 0
 
-    def test_stub_output(self, runner):
-        result = runner.invoke(cli, ["status"])
-        assert result.exit_code == 0
-        assert "[dex] status" in result.output
-        assert "./tasks/task-005.md" in result.output
-        assert "task-list.md" in result.output
+    def test_default_cwd(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["status"])
+            assert result.exit_code == 0
+            assert "[dex] status:" in result.output
+            assert "./tasks/task-005.md" in result.output
+            assert "task-list.md" in result.output
+
+    def test_explicit_single_target(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["status", "."])
+            assert result.exit_code == 0
+            assert "[dex] status: ." in result.output
+
+    def test_multi_target_runs_all(self, runner):
+        with runner.isolated_filesystem():
+            os.makedirs("a")
+            os.makedirs("b")
+            result = runner.invoke(cli, ["status", "a", "b"])
+            assert result.exit_code == 0
+            assert "[dex] status: a" in result.output
+            assert "[dex] status: b" in result.output
+            assert "Summary: 2 target(s)" in result.output
+
+    def test_no_summary_for_single_target(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["status", "."])
+            assert "Summary:" not in result.output
 
     def test_unknown_flag_exits_nonzero(self, runner):
-        result = runner.invoke(cli, ["status", "--verbose"])
-        assert result.exit_code != 0
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["status", "--verbose"])
+            assert result.exit_code != 0

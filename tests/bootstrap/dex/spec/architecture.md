@@ -31,6 +31,7 @@ See detailed decision records in `docs/architecture/`:
 | [ADR-0003](../docs/architecture/ADR-0003-git-worktree-strategy.md) | Worktree-per-issue branch strategy |
 | [ADR-0004](../docs/architecture/ADR-0004-package-name-matches-project.md) | Package directory named `dex/` not `src/` — prevents ModuleNotFoundError from any cwd |
 | [ADR-0005](../docs/architecture/ADR-0005-stub-output-convention.md) | Stub output: task link + interim command; `--verbose` reserved for real implementation |
+| [ADR-0006](../docs/architecture/ADR-0006-multi-target-invocation.md) | Multi-target `nargs=-1`; bootstrap=fail-fast, audit/validate/status=run-all |
 
 ## Constraints
 
