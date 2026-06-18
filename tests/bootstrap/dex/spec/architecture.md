@@ -10,11 +10,11 @@ feature work stays coherent with the bootstrap intent.
 dex follows a layered CLI architecture:
 
 ```
-CLI layer      (src/main.py — Click commands: bootstrap, audit, validate, status)
+CLI layer      (dex/main.py — Click commands: bootstrap, audit, validate, status)
     |
-Domain layer   (src/pipeline.py, src/validators.py, src/tasks.py)
+Domain layer   (dex/pipeline.py, dex/validators.py, dex/tasks.py)
     |
-I/O layer      (src/io.py — all file reads/writes isolated here)
+I/O layer      (dex/io.py — all file reads/writes isolated here)
 ```
 
 No business logic in the CLI layer. No I/O in the domain layer. Side effects are
@@ -34,10 +34,10 @@ See detailed decision records in `docs/architecture/`:
 - Domain layer must not import Click (no coupling to CLI framework in business logic)
 - I/O layer provides path-based interfaces; domain layer works with in-memory objects
 - All external tool invocations (pre-commit, shellcheck, validate_loomreed_light.sh)
-  go through a single `src/runner.py` module that captures output and exit codes
+  go through a single `dex/runner.py` module that captures output and exit codes
 
 ## Acceptance Criteria
 
 - Domain layer has zero imports from `click`
 - I/O layer is the only module that opens files
-- `src/runner.py` is the only module that calls `subprocess`
+- `dex/runner.py` is the only module that calls `subprocess`

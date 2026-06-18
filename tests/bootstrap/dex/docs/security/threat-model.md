@@ -20,11 +20,11 @@ network calls, does not store user data, and does not expose a web interface.
 ```
 [User input (CLI args)]
         |
-   [CLI layer — src/main.py]
+   [CLI layer — dex/main.py]
         |
-   [Domain layer — src/validators.py, src/tasks.py]
+   [Domain layer — dex/validators.py, dex/tasks.py]
         |                        |
-   [src/runner.py]          [src/io.py]
+   [dex/runner.py]          [dex/io.py]
         |                        |
 [External tools:           [Filesystem:
  pre-commit,                spec/, tasks/,
@@ -52,7 +52,7 @@ downstream model or shell.
 
 **Mitigations**:
 - Prompt files are read as raw text only; never interpolated into shell commands
-- User-supplied strings passed to `subprocess` must go through `src/validators.py`
+- User-supplied strings passed to `subprocess` must go through `dex/validators.py`
   allow-list before use
 - Path traversal: all file paths are resolved with `pathlib.Path.resolve()` and checked
   to remain within the project root before any read or write

@@ -39,7 +39,7 @@ docs/
   security/             Threat model + OWASP mapping (DAIS security-agent output)
   finops/               Token routing strategy + cost tagging (DAIS finops-agent output)
 
-src/                    Python CLI source
+dex/                    Python CLI source
 scripts/                Validation scripts
 prompts/                loom-reed-light workflow prompts
 ```

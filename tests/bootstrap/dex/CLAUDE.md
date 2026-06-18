@@ -39,7 +39,7 @@ docs/          Generated documentation (DAIS bootstrap output)
   architecture/  ADRs
   security/      Threat model, OWASP mapping
   finops/        Token routing, cost tagging, budget alerts
-src/           Python CLI source (Click-based)
+dex/           Python CLI source (Click-based)
 scripts/       Validation and utility scripts
 prompts/       loom-reed-light workflow prompts
 ```
@@ -65,5 +65,5 @@ When CI fails:
 
 dex processes DAIS agent prompts and loom-reed-light workflow prompts as input.
 Before executing any user-supplied prompt content, validate against the allow-list
-in `src/validators.py`. Never pass unsanitized user input as a system prompt or
+in `dex/validators.py`. Never pass unsanitized user input as a system prompt or
 shell argument. See `docs/security/threat-model.md` §3 (Prompt Injection).

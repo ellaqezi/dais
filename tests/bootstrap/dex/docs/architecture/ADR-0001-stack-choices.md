@@ -39,6 +39,6 @@ The developer machine already has Python 3.11+ available (required by DAIS).
 
 ## Consequences
 
-- All subprocess calls must go through `src/runner.py` to keep the domain layer testable
+- All subprocess calls must go through `dex/runner.py` to keep the domain layer testable
 - Click test runner enables unit testing of CLI behavior without spawning a subprocess
 - PyYAML safe_load is the only permitted YAML loading function (no yaml.load)

@@ -22,11 +22,11 @@ dev = [
 ]
 
 [project.scripts]
-dex = "src.main:cli"
+dex = "dex.main:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["src*"]
+include = ["dex*"]
 
 [tool.pytest.ini_options]
 addopts = "--tb=short"

@@ -12,14 +12,14 @@ CLI layer → Domain layer → I/O layer, with subprocess isolation in runner.py
 ## Acceptance Criteria
 
 - `dex --help` runs and lists bootstrap, audit, validate, status subcommands
-- `src/main.py` imports only from `src/` domain modules and `click`
-- `src/runner.py` is the only module calling `subprocess`
+- `dex/main.py` imports only from `dex/` domain modules and `click`
+- `dex/runner.py` is the only module calling `subprocess`
 - `pyproject.toml` declares all runtime and dev dependencies
 - `make install` creates `.venv` and installs package in editable mode
 
 ## Impact
 
-- Modules/Files/Tests: src/main.py, src/runner.py, src/io.py, pyproject.toml, tests/test_main.py
+- Modules/Files/Tests: dex/main.py, dex/runner.py, dex/io.py, pyproject.toml, tests/test_main.py
 
 ## Size
 

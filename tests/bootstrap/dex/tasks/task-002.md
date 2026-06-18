@@ -7,7 +7,7 @@ with per-layer attribution.
 ## Spec Links
 
 - spec/devex-integration.md#validate
-- spec/architecture.md#constraints (subprocess isolation via src/runner.py)
+- spec/architecture.md#constraints (subprocess isolation via dex/runner.py)
 
 ## Acceptance Criteria
 
@@ -20,8 +20,8 @@ with per-layer attribution.
 
 ## Impact
 
-- Modules/Files/Tests: src/validators.py, tests/test_validators.py (new)
-- Modifies: src/main.py (wire up validate command to validators module)
+- Modules/Files/Tests: dex/validators.py, tests/test_validators.py (new)
+- Modifies: dex/main.py (wire up validate command to validators module)
 
 ## Size
 
