@@ -51,6 +51,8 @@ install: check-prereqs
 validate:
 	$(PRECOMMIT) run --all-files
 	bash scripts/validate_loomreed_light.sh
+	bash scripts/validate_adrs.sh
+	bash scripts/validate_stubs.sh
 	shellcheck scripts/*.sh
 
 test:

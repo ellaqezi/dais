@@ -30,7 +30,15 @@ jobs:
       - name: Run LOOM schema validator
         run: bash scripts/validate_loomreed_light.sh
 
-      # Layer 3: shell script syntax (shellcheck is pre-installed on ubuntu-latest)
+      # Layer 3: ADR sequence and spec table sync
+      - name: Run ADR validator
+        run: bash scripts/validate_adrs.sh
+
+      # Layer 4: stub → task file references
+      - name: Run stub reference validator
+        run: bash scripts/validate_stubs.sh
+
+      # Layer 5: shell script syntax (shellcheck is pre-installed on ubuntu-latest)
       - name: Run shellcheck
         run: shellcheck scripts/*.sh
 
@@ -50,7 +58,7 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          pytest src/ tests/ \
-            --cov=src \
+          pytest dex/ tests/ \
+            --cov=dex \
             --cov-report=term-missing \
             --cov-fail-under=80
