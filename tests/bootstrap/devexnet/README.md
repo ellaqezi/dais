@@ -46,22 +46,25 @@ prompts/                loom-reed-light workflow prompts
 
 ## Quick Start
 
+**Prerequisites** (verify before step 1):
+- `python3 >= 3.11` — `python3 --version`
+- `git` — `git --version`
+- `shellcheck` — `shellcheck --version` (macOS: `brew install shellcheck`; Debian: `apt-get install shellcheck`)
+
+Run `make check-prereqs` to verify all three in one step.
+
 1. **Machine setup** (once per machine): follow [dotclaude](../audit/dotclaude/README.md)
 2. **Clone this repo** with standard git:
    ```bash
    git clone git@github.com:you/devexnet.git
    cd devexnet
    ```
-3. **Install development dependencies**:
+3. **Install development dependencies and register hooks**:
    ```bash
    make install
    ```
-4. **Register pre-commit hooks**:
-   ```bash
-   pre-commit install
-   pre-commit run --all-files
-   ```
-5. **Run validator**:
+   This creates `.venv`, installs all Python deps, and runs `pre-commit install`.
+4. **Run validator**:
    ```bash
    make validate
    ```
@@ -92,13 +95,22 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for full worktree workflow and branch tax
 
 ## Validation
 
-This project runs three independent validators in CI:
+This project runs three independent validators in CI, all invoked via `make validate`:
 
-| Validator | What it checks | Command |
-|-----------|----------------|---------|
-| pre-commit | Trailing whitespace, YAML, merge conflicts, secrets | `pre-commit run --all-files` |
-| LOOM schema | Task sections, status vocabulary, S/M sizing | `bash scripts/validate_loomreed_light.sh` |
-| shellcheck | Shell script syntax | `shellcheck scripts/*.sh` |
+| Validator | What it checks | Managed by |
+|-----------|----------------|------------|
+| pre-commit (7 hooks) | Trailing whitespace, YAML, merge conflicts, large files, line endings, secrets | Installed into `.venv` by `make install` — no system install needed |
+| LOOM schema | Task sections, status vocabulary, S/M sizing, task-list sync | `scripts/validate_loomreed_light.sh` — bash only, no extra deps |
+| shellcheck | Shell script syntax (`scripts/*.sh`) | System tool — verified by `make check-prereqs` with install instructions |
+
+**What `make install` self-contains:**
+- `pre-commit`, `ruff`, `pytest`, `pytest-cov`, `click`, `PyYAML` — all in `.venv`
+- `detect-secrets` — pre-commit downloads its own isolated environment
+
+**System prerequisites** (checked by `make check-prereqs` before install):
+- `python3 >= 3.11`
+- `git`
+- `shellcheck` (macOS: `brew install shellcheck`; Debian: `apt-get install shellcheck`)
 
 Run all at once: `make validate`
 

@@ -22,7 +22,7 @@ jobs:
       - name: Install pre-commit and detect-secrets
         run: pip install pre-commit detect-secrets
 
-      # Layer 1: formatting, whitespace, YAML, secrets
+      # Layer 1: formatting, whitespace, YAML, secrets (all via pre-commit)
       - name: Run pre-commit hooks
         run: pre-commit run --all-files
 
@@ -30,10 +30,7 @@ jobs:
       - name: Run LOOM schema validator
         run: bash scripts/validate_loomreed_light.sh
 
-      # Layer 3: shell script syntax
-      - name: Install shellcheck
-        run: sudo apt-get update -qq && sudo apt-get install -y shellcheck
-
+      # Layer 3: shell script syntax (shellcheck is pre-installed on ubuntu-latest)
       - name: Run shellcheck
         run: shellcheck scripts/*.sh
 

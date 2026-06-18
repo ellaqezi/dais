@@ -48,12 +48,16 @@ prompts/       loom-reed-light workflow prompts
 
 CI runs three validators in order — failures are independently attributable:
 
-1. `pre-commit run --all-files` — formatting, whitespace, YAML, secrets
+1. `pre-commit run --all-files` — formatting, whitespace, YAML, secrets (all hooks in `.venv`)
 2. `bash scripts/validate_loomreed_light.sh` — LOOM schema compliance
-3. `shellcheck scripts/*.sh` — shell syntax
+3. `shellcheck scripts/*.sh` — shell syntax (system tool; verified by `make check-prereqs`)
+
+**Self-contained after `make install`**: `pre-commit`, `ruff`, `pytest`, `detect-secrets` all live
+in `.venv` or pre-commit's cache. Only `python3 >= 3.11`, `git`, and `shellcheck` are system prerequisites.
 
 When CI fails:
-- pre-commit failure: fix formatting issue in the staged diff, re-push
+- pre-commit / trailing-whitespace / YAML: fix formatting in staged diff, re-push
+- pre-commit / detect-secrets: verify the flagged string is not a real secret; update baseline if safe
 - LOOM validation failure: task section missing or size > M — fix in task file
 - shellcheck failure: fix shell syntax in scripts/
 
