@@ -1,4 +1,4 @@
-# Contributing to devexnet
+# Contributing to dex
 
 ## Ground Rules
 
@@ -14,8 +14,8 @@ For every issue or task:
 
 ```bash
 # Create a worktree for the issue
-git worktree add ../devexnet-<issue-id> feature/<issue-id>-<slug>
-cd ../devexnet-<issue-id>
+git worktree add ../dex-<issue-id> feature/<issue-id>-<slug>
+cd ../dex-<issue-id>
 
 # Work on the feature (spec → refine → implement)
 # Run validation before pushing
@@ -26,8 +26,8 @@ git push -u origin feature/<issue-id>-<slug>
 gh pr create --fill
 
 # After merge, clean up
-cd ../devexnet
-git worktree remove ../devexnet-<issue-id>
+cd ../dex
+git worktree remove ../dex-<issue-id>
 ```
 
 ## Branch Taxonomy

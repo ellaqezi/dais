@@ -1,6 +1,6 @@
 ## Summary
 
-Scaffold the devexnet CLI package structure, entry point, and pyproject.toml.
+Scaffold the dex CLI package structure, entry point, and pyproject.toml.
 Establishes the layered architecture defined in spec/architecture.md:
 CLI layer → Domain layer → I/O layer, with subprocess isolation in runner.py.
 

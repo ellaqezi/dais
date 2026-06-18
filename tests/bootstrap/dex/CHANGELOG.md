@@ -1,13 +1,13 @@
 # Changelog
 
-All notable changes to devexnet are documented here.
+All notable changes to dex are documented here.
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
 ### Changed
-- Rename CLI entry point from `devexnet` to `dex` (package: `dex`, repo dir: `devexnet`)
+- Rename CLI entry point from `devexnet` to `dex` (package: `dex`, repo dir: `dex`)
 
 ### Added
 - Initial project scaffold via DAIS bootstrap

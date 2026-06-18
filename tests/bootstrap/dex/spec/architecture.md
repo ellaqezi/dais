@@ -2,12 +2,12 @@
 
 ## Goal
 
-Establish the architectural boundaries and design decisions for devexnet so future
+Establish the architectural boundaries and design decisions for dex so future
 feature work stays coherent with the bootstrap intent.
 
 ## Behavior
 
-devexnet follows a layered CLI architecture:
+dex follows a layered CLI architecture:
 
 ```
 CLI layer      (src/main.py — Click commands: bootstrap, audit, validate, status)

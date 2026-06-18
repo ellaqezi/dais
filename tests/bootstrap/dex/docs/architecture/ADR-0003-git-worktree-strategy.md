@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-Concurrent feature development on devexnet risks context bleed between branches: stashed
+Concurrent feature development on dex risks context bleed between branches: stashed
 work, partial changes, and accidental staging of unrelated files. Standard branch-switching
 on a single working tree amplifies this when an agent is mid-task.
 
@@ -15,8 +15,8 @@ on a single working tree amplifies this when an agent is mid-task.
 
 ```bash
 # Start an issue
-git worktree add ../devexnet-<issue-id> feature/<issue-id>-<slug>
-cd ../devexnet-<issue-id>
+git worktree add ../dex-<issue-id> feature/<issue-id>-<slug>
+cd ../dex-<issue-id>
 
 # Work, validate, push
 make validate
@@ -24,8 +24,8 @@ git push -u origin feature/<issue-id>-<slug>
 gh pr create --fill
 
 # After merge, clean up
-cd ../devexnet
-git worktree remove ../devexnet-<issue-id>
+cd ../dex
+git worktree remove ../dex-<issue-id>
 ```
 
 ## Branch Taxonomy
@@ -47,6 +47,6 @@ Changes meeting all three criteria may use the main worktree directly:
 ## Consequences
 
 - `git worktree list` shows active worktrees; prune regularly after merges
-- Worktree directories must be siblings (e.g. `../devexnet-42`), not subdirectories
+- Worktree directories must be siblings (e.g. `../dex-42`), not subdirectories
 - CI watcher (per dotclaude `git-workflow.md`) is spawned once per push, not per worktree
 - security-agent branch merges last per DAIS `scope-manifests.yaml` forced ordering

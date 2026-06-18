@@ -1,6 +1,6 @@
 ## Summary
 
-Implement `devexnet validate [target-dir]` subcommand: runs the three-layer validation
+Implement `dex validate [target-dir]` subcommand: runs the three-layer validation
 stack (pre-commit, LOOM schema, shellcheck) in sequence and reports failures
 with per-layer attribution.
 
@@ -11,12 +11,12 @@ with per-layer attribution.
 
 ## Acceptance Criteria
 
-- `devexnet validate` with no arguments validates the current working directory
-- `devexnet validate <path>` validates the specified directory
+- `dex validate` with no arguments validates the current working directory
+- `dex validate <path>` validates the specified directory
 - Each validator runs in order: pre-commit → LOOM schema → shellcheck
 - On failure, output clearly labels which validator failed and why
 - Exit code is 0 only if all three validators pass
-- `devexnet validate` on a clean project (this repo) exits 0
+- `dex validate` on a clean project (this repo) exits 0
 
 ## Impact
 

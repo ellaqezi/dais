@@ -1,6 +1,6 @@
 # DevEX
 
-A Python CLI harness (`dex`) that unifies three developer-experience tools — DAIS, dotclaude, and
+A Python CLI harness (`dex`) that unifies three developer-experience (DevEx) tools — DAIS, dotclaude, and
 loom-reed-light — into a single, coherent project structure.
 
 This repository was **bootstrapped by DAIS**, **structured by loom-reed-light**, and
@@ -56,8 +56,8 @@ Run `make check-prereqs` to verify all three in one step.
 1. **Machine setup** (once per machine): follow [dotclaude](../audit/dotclaude/README.md)
 2. **Clone this repo** with standard git:
    ```bash
-   git clone git@github.com:you/devexnet.git
-   cd devexnet
+   git clone git@github.com:you/dex.git
+   cd dex
    ```
 3. **Install development dependencies and register hooks**:
    ```bash
@@ -81,7 +81,7 @@ New features follow the loom-reed-light workflow:
 #    "plan next work"          → prompts/plan.md
 
 # 3. Refine and implement (per worktree, per issue)
-git worktree add ../devexnet-<issue-id> feature/<issue-id>-<slug>
+git worktree add ../dex-<issue-id> feature/<issue-id>-<slug>
 #    "refine task <id>"        → prompts/refine.md
 #    "implement task <id>"     → prompts/implement.md
 

@@ -9,12 +9,16 @@ MIN_PYTHON_MINOR := 11
 .PHONY: help check-prereqs install validate test lint clean
 
 help:
-	@echo "devexnet targets:"
+	@echo "dex targets:"
 	@echo "  install      Create .venv and install all dependencies (runs check-prereqs first)"
 	@echo "  validate     Run all validators: pre-commit hooks (incl. shellcheck), LOOM schema"
 	@echo "  test         Run test suite with coverage"
 	@echo "  lint         Run ruff linter"
 	@echo "  clean        Remove .venv, __pycache__, build artifacts"
+	@echo ""
+	@echo "After install, activate the venv to use 'dex' on PATH:"
+	@echo "  source .venv/bin/activate"
+	@echo "  (or invoke directly: .venv/bin/dex)"
 
 check-prereqs:
 	@command -v python3 >/dev/null 2>&1 || { \
@@ -37,6 +41,11 @@ install: check-prereqs
 	$(PIP) install --upgrade pip
 	$(PIP) install -e ".[dev]"
 	$(PRECOMMIT) install
+	@echo ""
+	@echo "Install complete. Activate the venv to use 'dex' on PATH:"
+	@echo "  source .venv/bin/activate"
+	@echo "  dex --help"
+	@echo "Or invoke without activating: .venv/bin/dex --help"
 	@echo "Run 'make validate' to verify the full setup."
 
 validate:

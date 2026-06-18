@@ -5,7 +5,7 @@ Status: Accepted
 
 ## Context
 
-devexnet needs a CLI tool that can:
+dex needs a CLI tool that can:
 - Invoke external processes (pre-commit, shellcheck, validate_loomreed_light.sh)
 - Parse YAML (DAIS agent config, loom-reed-light task files)
 - Be extended incrementally without large refactors

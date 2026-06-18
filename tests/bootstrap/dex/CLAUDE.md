@@ -1,22 +1,22 @@
-# CLAUDE.md — devexnet
+# CLAUDE.md — dex
 
 This file provides project-specific guidance for Claude Code sessions in this repository.
-It overrides global `~/.claude/` rules only where devexnet differs. All unmentioned rules
+It overrides global `~/.claude/` rules only where dex differs. All unmentioned rules
 defer to the global dotclaude config.
 
 ## This Project
 
-dex (package: `dex`, repo: `devexnet`) is a Python CLI tool that orchestrates DAIS, dotclaude, and loom-reed-light.
+dex (package: `dex`, repo: `dex`) is a Python CLI tool that orchestrates DAIS, dotclaude, and loom-reed-light.
 Stack: Python 3.11+, Click, PyYAML, pytest.
 No web server. No external service calls in core logic. All side effects isolated to I/O layer.
 
-## Reference Files (devexnet-specific overrides)
+## Reference Files (dex-specific overrides)
 
 | Concern | Override |
 |---------|---------|
 | Task sizing | loom-reed-light rules apply: S (≤250 LOC), M (251-500 LOC). Decompose before implementing anything larger. |
 | Spec-first | Before any non-trivial feature: create or update `spec/<topic>.md` first. Link from task. |
-| Worktree | Per ADR-0003: `git worktree add ../devexnet-<issue-id> feature/<issue-id>-<slug>`. |
+| Worktree | Per ADR-0003: `git worktree add ../dex-<issue-id> feature/<issue-id>-<slug>`. |
 | Validation | Run `make validate` before every push. Run `dex validate` for a quick check. Fixes CI failures autonomously (see §CI below). |
 | Model tier | See `docs/finops/token-routing-strategy.md`: S tasks → Haiku, M tasks → Sonnet, ADRs/architecture → Opus. |
 
@@ -63,7 +63,7 @@ When CI fails:
 
 ## Prompt Injection Warning
 
-devexnet processes DAIS agent prompts and loom-reed-light workflow prompts as input.
+dex processes DAIS agent prompts and loom-reed-light workflow prompts as input.
 Before executing any user-supplied prompt content, validate against the allow-list
 in `src/validators.py`. Never pass unsanitized user input as a system prompt or
 shell argument. See `docs/security/threat-model.md` §3 (Prompt Injection).

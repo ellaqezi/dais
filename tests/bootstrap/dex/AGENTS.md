@@ -1,4 +1,4 @@
-# devexnet — Agent and Command Inventory
+# dex — Agent and Command Inventory
 
 This file serves two roles:
 - **DAIS**: declares the agents used to bootstrap and audit this project.
@@ -80,7 +80,7 @@ command table above. Keep command phrases consistent with the existing vocabular
 To run DAIS audit against this project:
 ```bash
 # From the DAIS root:
-# Phase 1: derive-agent scans tests/bootstrap/devexnet/
+# Phase 1: derive-agent scans tests/bootstrap/dex/
 # Phase 2: manifest-agent presents gap register
 # Phase 3: audit-agent → gap-agent → remediation-agent
 ```
