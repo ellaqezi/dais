@@ -33,7 +33,7 @@ ready
 
 ## Test Plan
 
-- `devexnet validate` on this project exits 0 after `make validate` passes
+- `dex validate` on this project exits 0 after `make validate` passes
 - Unit test: mock runner.py calls; verify correct sequence and exit-code propagation
 - Integration test: introduce a deliberate task-section gap → LOOM validator fails
   → exit code non-zero, output attributes failure to LOOM schema layer

@@ -1,6 +1,6 @@
 # devexnet
 
-A Python CLI harness that unifies three developer-experience tools — DAIS, dotclaude, and
+A Python CLI harness (`dex`) that unifies three developer-experience tools — DAIS, dotclaude, and
 loom-reed-light — into a single, coherent project structure.
 
 This repository was **bootstrapped by DAIS**, **structured by loom-reed-light**, and
@@ -16,12 +16,12 @@ This repository was **bootstrapped by DAIS**, **structured by loom-reed-light**,
 
 ## Project Purpose
 
-devexnet is a CLI tool for orchestrating the three-tool DevEx stack:
+dex is a CLI tool for orchestrating the three-tool DevEx stack:
 
-- `devexnet bootstrap` — runs DAIS derive → manifest → execute on a target directory
-- `devexnet audit` — runs DAIS audit sequence (audit-agent → gap-agent → remediation-agent)
-- `devexnet validate` — runs LOOM schema validator + DAIS pre-execution validator
-- `devexnet status` — shows current task/spec/gap register state
+- `dex bootstrap` — runs DAIS derive → manifest → execute on a target directory
+- `dex audit` — runs DAIS audit sequence (audit-agent → gap-agent → remediation-agent)
+- `dex validate` — runs LOOM schema validator + DAIS pre-execution validator
+- `dex status` — shows current task/spec/gap register state
 
 ## Architecture at a Glance
 
@@ -87,6 +87,7 @@ git worktree add ../devexnet-<issue-id> feature/<issue-id>-<slug>
 
 # 4. Validate before pushing
 make validate
+dex validate                       # quick check
 git diff --cached                  # review staged diff (Opus, 3 passes)
 git push                           # triggers CI + CodeRabbit watcher
 ```

@@ -11,7 +11,7 @@ CLI layer → Domain layer → I/O layer, with subprocess isolation in runner.py
 
 ## Acceptance Criteria
 
-- `devexnet --help` runs and lists bootstrap, audit, validate, status subcommands
+- `dex --help` runs and lists bootstrap, audit, validate, status subcommands
 - `src/main.py` imports only from `src/` domain modules and `click`
 - `src/runner.py` is the only module calling `subprocess`
 - `pyproject.toml` declares all runtime and dev dependencies
@@ -32,7 +32,7 @@ done
 ## Test Plan
 
 - `make install` exits 0
-- `devexnet --help` shows four subcommands
+- `dex --help` shows four subcommands
 - Each subcommand `--help` shows at minimum a description and `--help` option
 - `pytest tests/test_main.py` passes
 

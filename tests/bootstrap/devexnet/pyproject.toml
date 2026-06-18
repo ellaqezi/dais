@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "devexnet"
+name = "dex"
 version = "0.1.0"
-description = "DevEx orchestration tool for DAIS, dotclaude, and loom-reed-light"
+description = "DevEx executor — orchestrates DAIS, dotclaude, and loom-reed-light"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
@@ -22,7 +22,7 @@ dev = [
 ]
 
 [project.scripts]
-devexnet = "src.main:cli"
+dex = "src.main:cli"
 
 [tool.setuptools.packages.find]
 where = ["."]
