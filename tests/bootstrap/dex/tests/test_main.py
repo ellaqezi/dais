@@ -44,23 +44,35 @@ class TestBootstrap:
         result = runner.invoke(cli, ["bootstrap", "--help"])
         assert result.exit_code == 0
         assert "DAIS" in result.output
-
-    def test_default_target_is_cwd(self, runner):
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["bootstrap"])
-            assert result.exit_code == 0
-            assert "[dex] bootstrap:" in result.output
-            assert "task-003" in result.output
-
-    def test_explicit_target(self, runner):
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["bootstrap", "."])
-            assert result.exit_code == 0
-            assert "[dex] bootstrap:" in result.output
+        assert "--verbose" in result.output
 
     def test_nonexistent_target_exits_nonzero(self, runner):
         result = runner.invoke(cli, ["bootstrap", "/no/such/directory"])
         assert result.exit_code != 0
+
+    def test_default_terse_output(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["bootstrap"])
+            assert result.exit_code == 0
+            assert "[dex] bootstrap:" in result.output
+            assert "./tasks/task-003.md" in result.output
+            assert "--verbose" in result.output
+            # detailed steps should NOT appear without --verbose
+            assert "derive-agent" not in result.output
+
+    def test_verbose_output(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["bootstrap", "--verbose"])
+            assert result.exit_code == 0
+            assert "derive-agent" in result.output
+            assert "manifest-agent" in result.output
+            assert "execute phase" in result.output
+
+    def test_verbose_short_flag(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["bootstrap", "-v"])
+            assert result.exit_code == 0
+            assert "derive-agent" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -71,24 +83,34 @@ class TestAudit:
     def test_help(self, runner):
         result = runner.invoke(cli, ["audit", "--help"])
         assert result.exit_code == 0
-        assert "audit" in result.output.lower()
-
-    def test_default_target_is_cwd(self, runner):
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["audit"])
-            assert result.exit_code == 0
-            assert "[dex] audit:" in result.output
-            assert "task-004" in result.output
-
-    def test_explicit_target(self, runner):
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["audit", "."])
-            assert result.exit_code == 0
-            assert "[dex] audit:" in result.output
+        assert "--verbose" in result.output
 
     def test_nonexistent_target_exits_nonzero(self, runner):
         result = runner.invoke(cli, ["audit", "/no/such/directory"])
         assert result.exit_code != 0
+
+    def test_default_terse_output(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["audit"])
+            assert result.exit_code == 0
+            assert "[dex] audit:" in result.output
+            assert "./tasks/task-004.md" in result.output
+            assert "--verbose" in result.output
+            assert "audit-agent" not in result.output
+
+    def test_verbose_output(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["audit", "--verbose"])
+            assert result.exit_code == 0
+            assert "audit-agent" in result.output
+            assert "gap-agent" in result.output
+            assert "remediation-agent" in result.output
+
+    def test_verbose_short_flag(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["audit", "-v"])
+            assert result.exit_code == 0
+            assert "audit-agent" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -99,24 +121,37 @@ class TestValidate:
     def test_help(self, runner):
         result = runner.invoke(cli, ["validate", "--help"])
         assert result.exit_code == 0
-
-    def test_default_target_is_cwd(self, runner):
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["validate"])
-            assert result.exit_code == 0
-            assert "[dex] validate:" in result.output
-            assert "task-002" in result.output
-            assert "make validate" in result.output
-
-    def test_explicit_target(self, runner):
-        with runner.isolated_filesystem():
-            result = runner.invoke(cli, ["validate", "."])
-            assert result.exit_code == 0
-            assert "[dex] validate:" in result.output
+        assert "--verbose" in result.output
 
     def test_nonexistent_target_exits_nonzero(self, runner):
         result = runner.invoke(cli, ["validate", "/no/such/directory"])
         assert result.exit_code != 0
+
+    def test_default_terse_output(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["validate"])
+            assert result.exit_code == 0
+            assert "[dex] validate:" in result.output
+            assert "./tasks/task-002.md" in result.output
+            assert "make validate" in result.output
+            assert "--verbose" in result.output
+            # layer details should NOT appear without --verbose
+            assert "pre-commit" not in result.output
+
+    def test_verbose_output(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["validate", "--verbose"])
+            assert result.exit_code == 0
+            assert "pre-commit" in result.output
+            assert "LOOM schema" in result.output
+            assert "shellcheck" in result.output
+            assert "make validate" in result.output
+
+    def test_verbose_short_flag(self, runner):
+        with runner.isolated_filesystem():
+            result = runner.invoke(cli, ["validate", "-v"])
+            assert result.exit_code == 0
+            assert "pre-commit" in result.output
 
 
 # ---------------------------------------------------------------------------
@@ -127,9 +162,26 @@ class TestStatus:
     def test_help(self, runner):
         result = runner.invoke(cli, ["status", "--help"])
         assert result.exit_code == 0
+        assert "--verbose" in result.output
 
-    def test_exits_zero(self, runner):
+    def test_default_terse_output(self, runner):
         result = runner.invoke(cli, ["status"])
         assert result.exit_code == 0
         assert "[dex] status" in result.output
+        assert "./tasks/task-005.md" in result.output
         assert "task-list.md" in result.output
+        assert "--verbose" in result.output
+        # state sources should NOT appear without --verbose
+        assert "spec/" not in result.output
+
+    def test_verbose_output(self, runner):
+        result = runner.invoke(cli, ["status", "--verbose"])
+        assert result.exit_code == 0
+        assert "task-list.md" in result.output
+        assert "spec/" in result.output
+        assert "gap register" in result.output
+
+    def test_verbose_short_flag(self, runner):
+        result = runner.invoke(cli, ["status", "-v"])
+        assert result.exit_code == 0
+        assert "spec/" in result.output
