@@ -50,8 +50,20 @@ prompts/                loom-reed-light workflow prompts
 - `python3 >= 3.11` — `python3 --version`
 - `git` — `git --version`
 - `shellcheck` — `shellcheck --version` (macOS: `brew install shellcheck`; Debian: `apt-get install shellcheck`)
+- **LLM runner** — `dex audit` and `dex bootstrap` invoke an LLM backend to run DAIS agents.
+  By default the command `claude --print --` is used ([Claude CLI](https://docs.anthropic.com/en/docs/claude-cli)).
+  If you use a different backend, set the environment variable before running:
+  ```bash
+  export DEX_AGENT_CMD="my-llm-cli --print --"
+  ```
+  The runner writes the combined system + user prompt to stdin and reads the response from stdout.
+- **DAIS root** — `dex audit` looks up agent `.md` files from the dais repository.
+  It auto-detects the root by walking up from the installed package; if that fails, set:
+  ```bash
+  export DAIS_ROOT="/path/to/dais"
+  ```
 
-Run `make check-prereqs` to verify all three in one step.
+Run `make check-prereqs` to verify python3, git, and shellcheck in one step (LLM runner is not checked automatically).
 
 1. **Machine setup** (once per machine): follow [dotclaude](../audit/dotclaude/README.md)
 2. **Clone this repo** with standard git:

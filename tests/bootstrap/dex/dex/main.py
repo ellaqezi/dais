@@ -4,6 +4,8 @@ import sys
 
 import click
 
+from dex import pipeline
+
 
 def _print_summary(command: str, results: list[tuple[str, bool]]) -> None:
     """Print a multi-target summary line."""
@@ -35,15 +37,20 @@ def bootstrap(target_dirs: tuple) -> None:
 
 @cli.command()
 @click.argument("target_dirs", nargs=-1, type=click.Path(exists=True, file_okay=False))
-def audit(target_dirs: tuple) -> None:
+@click.option("--apply", is_flag=True, help="Write gap-register.md to each target directory.")
+def audit(target_dirs: tuple, apply: bool) -> None:
     """Run DAIS audit sequence: audit-agent \u2192 gap-agent \u2192 remediation-agent."""
     dirs = target_dirs or (".",)
     results: list[tuple[str, bool]] = []
     for target in dirs:
         click.echo(f"[dex] audit: {target}")
-        click.echo("  Not yet implemented  \u2192  ./tasks/task-004.md")
-        click.echo("  Interim: run DAIS audit agents manually from the dais/ root")
-        results.append((target, False))
+        try:
+            gap_register = pipeline.run_audit(target, apply=apply)
+            click.echo(gap_register)
+            results.append((target, True))
+        except (RuntimeError, ValueError) as exc:
+            click.echo(f"  Error: {exc}", err=True)
+            results.append((target, False))
         if len(dirs) > 1:
             click.echo()
     _print_summary("audit", results)
