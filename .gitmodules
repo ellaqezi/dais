@@ -1,0 +1,9 @@
+[submodule "tests/audit/dotfiles"]
+	path = tests/audit/dotfiles
+	url = git@github.com:ellaqezi/dotfiles.git
+[submodule "tests/audit/dotclaude"]
+	path = tests/audit/dotclaude
+	url = git@github.com:LeanerCloud/dotclaude.git
+[submodule "tests/audit/loom-reed-light"]
+	path = tests/audit/loom-reed-light
+	url = https://github.com/julianbei/loom-reed-light

@@ -1,0 +1,23 @@
+# Pre-commit hooks for the DAIS repository.
+#
+# Setup once per clone:
+#   pip install pre-commit   # or: brew install pre-commit
+#   pre-commit install       # registers the git hook
+#
+# Run all hooks against every tracked file:
+#   pre-commit run --all-files
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-merge-conflict
+      - id: check-yaml
+        files: \.(yaml|yml)$
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: mixed-line-ending
+        args: [--fix=lf]
