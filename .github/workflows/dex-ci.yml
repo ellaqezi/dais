@@ -1,0 +1,77 @@
+---
+name: dex CI
+
+on:
+  push:
+    branches:
+      - main
+      - bootstrap
+      - bootstrap-test
+    paths:
+      - 'tests/bootstrap/dex/**'
+  pull_request:
+    paths:
+      - 'tests/bootstrap/dex/**'
+
+defaults:
+  run:
+    working-directory: tests/bootstrap/dex
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install pre-commit and detect-secrets
+        run: pip install pre-commit detect-secrets
+
+      # Layer 1: formatting, whitespace, YAML, secrets (all via pre-commit)
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+
+      # Layer 2: loom-reed-light schema (task sections, status vocabulary, S/M sizing)
+      - name: Run LOOM schema validator
+        run: bash scripts/validate_loomreed_light.sh
+
+      # Layer 3: ADR sequence and spec table sync
+      - name: Run ADR validator
+        run: bash scripts/validate_adrs.sh
+
+      # Layer 4: stub → task file references
+      - name: Run stub reference validator
+        run: bash scripts/validate_stubs.sh
+
+      # Layer 5: shell script syntax (shellcheck is pre-installed on ubuntu-latest)
+      - name: Run shellcheck
+        run: shellcheck scripts/*.sh
+
+  test:
+    runs-on: ubuntu-latest
+    needs: validate
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+        working-directory: tests/bootstrap/dex
+
+      - name: Run tests with coverage
+        run: |
+          pytest dex/ tests/ \
+            --cov=dex \
+            --cov-report=term-missing \
+            --cov-fail-under=80
+        working-directory: tests/bootstrap/dex
